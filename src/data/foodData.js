@@ -1,0 +1,88 @@
+export const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Beverages'];
+
+export const todaysSpecial = [
+  {
+    id: 'special-1',
+    name: 'Masala Dosa',
+    price: 65,
+    rating: 4.7,
+    category: 'Breakfast',
+    imageStyle: 'imageOrange',
+    accentStyle: 'accentOrange',
+  },
+  {
+    id: 'special-2',
+    name: 'Veg Thali',
+    price: 120,
+    rating: 4.6,
+    category: 'Lunch',
+    imageStyle: 'imageGreen',
+    accentStyle: 'accentGreen',
+  },
+  {
+    id: 'special-3',
+    name: 'Filter Coffee',
+    price: 35,
+    rating: 4.9,
+    category: 'Beverages',
+    imageStyle: 'imageAmber',
+    accentStyle: 'accentAmber',
+  },
+  {
+    id: 'special-4',
+    name: 'Paneer Cutlet',
+    price: 55,
+    rating: 4.5,
+    category: 'Snacks',
+    imageStyle: 'imageSky',
+    accentStyle: 'accentSky',
+  },
+];
+
+export const popularItems = [
+  {
+    id: 'popular-1',
+    name: 'Idli Sambar',
+    price: 45,
+    rating: 4.8,
+    category: 'Breakfast',
+    imageStyle: 'imagePink',
+    accentStyle: 'accentPink',
+  },
+  {
+    id: 'popular-2',
+    name: 'Chole Bhature',
+    price: 90,
+    rating: 4.6,
+    category: 'Lunch',
+    imageStyle: 'imageOrange',
+    accentStyle: 'accentOrange',
+  },
+  {
+    id: 'popular-3',
+    name: 'Veg Sandwich',
+    price: 50,
+    rating: 4.4,
+    category: 'Snacks',
+    imageStyle: 'imageLime',
+    accentStyle: 'accentLime',
+  },
+  {
+    id: 'popular-4',
+    name: 'Cold Coffee',
+    price: 60,
+    rating: 4.7,
+    category: 'Beverages',
+    imageStyle: 'imageViolet',
+    accentStyle: 'accentViolet',
+  },
+  {
+    id: 'popular-5',
+    name: 'Masala Tea',
+    price: 20,
+    rating: 4.5,
+    category: 'Beverages',
+    imageStyle: 'imageRed',
+    accentStyle: 'accentRed',
+  },
+];
