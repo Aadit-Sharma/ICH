@@ -1,69 +1,101 @@
-import React from "react";
-import { ScrollView } from "react-native";
 
-import styles from "./HomeStyles";
+import React, {useEffect, useRef, useState} from 'react';
+import {Animated, ScrollView} from 'react-native';
+
+import styles from './HomeStyles';
 
 import {
   ScreenContainer,
   AppHeader,
   SearchBar,
   SectionTitle,
-} from "../../components/common";
+} from '../../components/common';
 
 import {
   OfferBanner,
   CategoryList,
   RecommendedSection,
-} from "../../components/home";
+} from '../../components/home';
 
-import { Spacing } from "../../theme";
+import Routes from '../../navigation/Routes';
 
-const Home = ({ navigation }) => {
+export default function Home({navigation}) {
+  const [searchText, setSearchText] = useState('');
+  const [cartCount, setCartCount] = useState(0);
+
+  // Screen fade animation
+  const screenOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(screenOpacity, {
+      toValue: 1,
+      duration: 350,
+      useNativeDriver: true,
+    }).start();
+  }, [screenOpacity]);
+
+  const handleCartPress = () => {
+    navigation.navigate(Routes.CART);
+  };
+
+  const handleFoodPress = food => {
+    navigation.navigate(Routes.FOOD_DETAILS, {
+      food,
+    });
+  };
+
+  const handleAddToCart = () => {
+    setCartCount(currentCount => currentCount + 1);
+  };
 
   return (
-
-    <ScreenContainer>
-
-      <AppHeader
-        greeting="Good Morning"
-        username="Anushi"
-        rightIcon="🔔"
-      />
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.container}
-      >
-
-        <SearchBar
-          placeholder="Search food..."
+    <Animated.View
+      style={{
+        flex: 1,
+        opacity: screenOpacity,
+      }}>
+      <ScreenContainer>
+        <AppHeader
+          greeting="Good Morning"
+          username="Anushi"
+          subtitle="Indian Coffee House"
+          cartCount={cartCount}
+          onCartPress={handleCartPress}
         />
 
-        <OfferBanner />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.container}>
+          <SearchBar
+            value={searchText}
+            onChangeText={setSearchText}
+            onClear={() => setSearchText('')}
+            placeholder="Search food..."
+          />
 
-        <SectionTitle
-          title="Categories"
-          actionText="View All"
-        />
+          <OfferBanner />
 
-        <CategoryList />
+          <SectionTitle
+            title="Categories"
+            actionText="View All"
+          />
 
-        <SectionTitle
-          title="Recommended For You"
-          actionText="See More"
-        />
+          <CategoryList />
 
-        <RecommendedSection
-          navigation={navigation}
-        />
-
-      </ScrollView>
-
-    </ScreenContainer>
-
+          <SectionTitle
+            title="Recommended For You"
+            actionText="See More"
+          />
+{/*
+          <RecommendedSection
+            navigation={navigation}
+            searchText={searchText}
+            onFoodPress={handleFoodPress}
+            onAdd={handleAddToCart}
+          />
+        */}
+        </ScrollView>
+      </ScreenContainer>
+    </Animated.View>
   );
-
-};
-
-
-export default Home;
+}

@@ -2,11 +2,13 @@ import React from "react";
 import {
   View,
   TextInput,
-  Text,
   Pressable,
+  Image,
+  Text,
 } from "react-native";
 
 import styles from "./SearchBarStyles";
+import Icon from "react-native-vector-icons/Ionicons";
 
 const SearchBar = ({
   value,
@@ -14,35 +16,33 @@ const SearchBar = ({
   placeholder = "Search food...",
   onClear,
 }) => {
-
   return (
-
     <View style={styles.container}>
-
-      <Text style={styles.icon}>
-        🔍
-      </Text>
+      <Icon
+        name="search"
+        size={20}
+        color="#8A94A6"
+        style={styles.icon}
+      />
 
       <TextInput
         style={styles.input}
-        placeholder={placeholder}
         value={value}
         onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor="#8A98A8"
+        returnKeyType="search"
       />
 
       {value ? (
         <Pressable
-          onPress={onClear}
           style={styles.clearButton}
+          onPress={onClear}
         >
-          <Text style={styles.clearText}>
-            ✕
-          </Text>
+          <Text style={styles.clearText}>✕</Text>
         </Pressable>
       ) : null}
-
     </View>
-
   );
 };
 

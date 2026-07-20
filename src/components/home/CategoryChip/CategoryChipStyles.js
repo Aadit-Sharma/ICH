@@ -1,59 +1,54 @@
-import {StyleSheet} from "react-native";
+import { StyleSheet } from "react-native";
 
 import {
-
-Colors,
-
-Radius,
-
-Spacing,
-
-Typography
-
+  Colors,
+  Radius,
+  Spacing,
+  Typography,
 } from "../../../theme";
 
-const styles=StyleSheet.create({
+const styles = StyleSheet.create({
+  container: {
+    height: 40,
 
-container:{
+    paddingHorizontal: 18,
 
-paddingVertical:Spacing.sm,
+    borderRadius: 20,
 
-paddingHorizontal:Spacing.md,
+    justifyContent: "center",
 
-borderRadius:Radius.round,
+    alignItems: "center",
 
-backgroundColor:Colors.white,
+    backgroundColor: Colors.white,
 
-borderWidth:1,
+    borderWidth: 1,
 
-borderColor:Colors.border,
+    borderColor: Colors.border,
 
-marginRight:Spacing.sm,
+    marginRight: 10,
+  },
 
-},
+  selected: {
+    backgroundColor: Colors.primary,
 
-selected:{
+    borderColor: Colors.primary,
+  },
 
-backgroundColor:Colors.primary,
+  text: {
+    ...Typography.bodySmall,
 
-borderColor:Colors.primary,
+    color: Colors.textPrimary,
 
-},
+    fontSize: 14,
 
-text:{
+    fontWeight: "700",
 
-...Typography.bodySmall,
+    letterSpacing: 0,
+  },
 
-color:Colors.textPrimary,
-
-},
-
-selectedText:{
-
-color:Colors.white,
-
-}
-
+  selectedText: {
+    color: Colors.white,
+  },
 });
 
 export default styles;

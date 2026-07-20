@@ -86,11 +86,14 @@ export default function Splash({navigation}) {
         </Animated.View>
 
         <Animated.View
-          style={{
-            opacity: textOpacity,
-            transform: [{translateY: textTranslate}],
-            alignItems: 'center',
-          }}>
+          style={[
+            styles.textContent,
+            {
+              opacity: textOpacity,
+              transform: [{ translateY: textTranslate }],
+            },
+          ]}
+        >
           <Text style={styles.title}>Indian Coffee House</Text>
           <Text style={styles.subtitle}>Employee Food Ordering</Text>
         </Animated.View>
@@ -103,13 +106,7 @@ export default function Splash({navigation}) {
             opacity: dotsOpacity,
           },
         ]}>
-        <Text
-          style={{
-            fontSize: 16,
-            color: '#005BAC',
-            letterSpacing: 6,
-            fontWeight: '700',
-          }}>
+        <Text style={styles.loadingDots}>
           • • •
         </Text>
       </Animated.View>

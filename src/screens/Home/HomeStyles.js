@@ -1,34 +1,32 @@
 import {StyleSheet} from 'react-native';
-
-import { Spacing } from '../../theme';
+import {Spacing, Colors} from '../../theme';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7FA',
     padding: Spacing.lg,
     paddingBottom: 120,
   },
+
   content: {
-    paddingTop: 56,
-    paddingHorizontal: 20,
-    paddingBottom: 32,
+    paddingTop: 34,
+    paddingBottom: 40,
   },
+
   categoriesList: {
-    paddingBottom: 8,
+    paddingRight: Spacing.lg,
+    paddingBottom: 10,
   },
+
   section: {
-    marginTop: 24,
+    marginTop: 30,
   },
+
   sectionTitle: {
-    color: '#102A43',
+    color: Colors.textPrimary,
     fontSize: 20,
     fontWeight: '800',
     marginBottom: 14,
-    letterSpacing: 0,
-  },
-  foodList: {
-    paddingBottom: 8,
   },
 });
 

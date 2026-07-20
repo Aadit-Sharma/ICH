@@ -7,23 +7,29 @@ import {
 } from "../../../theme";
 
 const styles = StyleSheet.create({
-
   container: {
+    minHeight: 160,
 
-    backgroundColor: Colors.primary,
+    borderRadius: 30,
 
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xl,
 
-    paddingTop: Spacing.xl,
+    marginTop: Spacing.md,
+    marginBottom: Spacing.lg,
 
-    paddingBottom: Spacing.lg,
-
-    borderBottomLeftRadius: 24,
-
-    borderBottomRightRadius: 24,
+    shadowColor: Colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 14,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 24,
+    elevation: 10,
   },
 
   row: {
+    flex: 1,
 
     flexDirection: "row",
 
@@ -32,42 +38,122 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  greeting: {
+  copy: {
+    flex: 1,
 
+    paddingRight: Spacing.lg,
+  },
+
+  greeting: {
     ...Typography.body,
 
-    color: Colors.white,
+    color: "#DCEBFA",
   },
 
   username: {
-
     ...Typography.h2,
 
     color: Colors.white,
 
     marginTop: Spacing.xs,
+
+    fontSize: 28,
+
+    fontWeight: "800",
   },
 
-  iconContainer: {
+  subtitle: {
+    color: "#F9D78A",
 
-    width: 46,
+    marginTop: Spacing.sm,
 
-    height: 46,
+    fontSize: 14,
 
-    borderRadius: 23,
+    fontWeight: "700",
+  },
+
+  cartButton: {
+    width: 56,
+
+    height: 56,
+
+    borderRadius: 28,
+
+    backgroundColor: Colors.white,
 
     justifyContent: "center",
 
     alignItems: "center",
 
+    shadowColor: "#003A70",
+
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+
+    shadowOpacity: 0.12,
+
+    shadowRadius: 18,
+
+    elevation: 8,
+  },
+
+  cartIcon: {
+    width: 28,
+
+    height: 28,
+  },
+
+  badge: {
+    position: "absolute",
+
+    top: -4,
+
+    right: -4,
+
+    minWidth: 20,
+
+    height: 20,
+
+    borderRadius: 10,
+
+    backgroundColor: "#F9A826",
+
+    justifyContent: "center",
+
+    alignItems: "center",
+
+    paddingHorizontal: 5,
+  },
+
+  badgeText: {
+    color: Colors.white,
+
+    fontSize: 11,
+
+    fontWeight: "800",
+  },
+
+  iconContainer: {
+    width: 56,
+
+    height: 56,
+
+    borderRadius: 28,
+
     backgroundColor: "rgba(255,255,255,0.20)",
+
+    justifyContent: "center",
+
+    alignItems: "center",
   },
 
   icon: {
+    fontSize: 24,
 
-    fontSize: 22,
+    color: Colors.white,
   },
-
 });
 
 export default styles;

@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+
 import {
   Colors,
   Radius,
@@ -8,8 +9,8 @@ import {
 } from "../../../theme";
 
 const styles = StyleSheet.create({
-
   container: {
+    height: 58,
 
     flexDirection: "row",
 
@@ -17,43 +18,50 @@ const styles = StyleSheet.create({
 
     backgroundColor: Colors.white,
 
-    borderRadius: Radius.lg,
+    borderRadius: 29,
 
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: 18,
 
-    marginVertical: Spacing.md,
+    marginBottom: Spacing.lg,
 
     ...Shadows.small,
   },
 
   icon: {
-    fontSize: 18,
-    marginRight: Spacing.sm,
+    width: 21,
+
+    height: 21,
+
+    opacity: 0.58,
+
+    marginRight: 10,
   },
 
   input: {
-
     flex: 1,
 
     ...Typography.body,
 
     color: Colors.textPrimary,
 
+    fontSize: 16,
+
     paddingVertical: Spacing.md,
+
+    letterSpacing: 0,
   },
 
   clearButton: {
-
     paddingLeft: Spacing.sm,
   },
 
   clearText: {
-
     fontSize: 18,
 
     color: Colors.textSecondary,
-  },
 
+    fontWeight: "700",
+  },
 });
 
 export default styles;
