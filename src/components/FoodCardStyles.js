@@ -104,6 +104,33 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: 0,
   },
+  quantitySelector: {
+    height: 33,
+    borderRadius: 17,
+    backgroundColor: '#005BAC',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  quantityButton: {
+    width: 36,
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quantityButtonText: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '900',
+    lineHeight: 24,
+  },
+  quantityText: {
+    color: '#FFFFFF',
+    fontSize: 19,
+    fontWeight: '700',
+  },
 });
 
 export default styles;

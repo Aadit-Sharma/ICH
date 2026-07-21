@@ -23,7 +23,7 @@ Login -> Home -> FoodDetails / Cart
 // React + Hooks
 // useEffect starts Home entry animations.
 // useRef stores Animated.Value objects.
-// useState stores search text and cart count.
+// useState stores search text.
 import React, {useEffect, useRef, useState} from 'react';
 
 // React Native components
@@ -96,9 +96,6 @@ export default function Home({navigation}) {
   // React State
   // Stores search input value.
   const [searchText, setSearchText] = useState('');
-  // React State
-  // Stores local cart badge count.
-  const [cartCount, setCartCount] = useState(0);
 
   // React Hook
   // Starts Home animations after first render.
@@ -173,6 +170,10 @@ export default function Home({navigation}) {
     navigation.navigate(Routes.FOOD_DETAILS, {food: item});
   };
 
+  const handleCategoryPress = category => {
+    navigation.navigate(Routes.MENU, {category});
+  };
+
   // Function
   // Purpose: open Cart screen.
   // Parameters: none.
@@ -180,17 +181,6 @@ export default function Home({navigation}) {
   // Called when cart button is pressed.
   const handleCartPress = () => {
     navigation.navigate(Routes.CART);
-  };
-
-  // Function
-  // Purpose: increase local cart badge count.
-  // Parameters: none.
-  // Return value: none.
-  // Called when ADD button is pressed.
-  const handleAddToCart = () => {
-    // React State setter
-    // Uses previous count to safely add 1.
-    setCartCount(currentCount => currentCount + 1);
   };
 
   // JavaScript array reduce
@@ -217,7 +207,11 @@ export default function Home({navigation}) {
   const renderCategoryColumn = ({item}) => (
     <View style={styles.categoryColumn}>
       {item.map(category => (
-        <CategoryCard key={category.id} category={category} />
+        <CategoryCard
+          key={category.id}
+          category={category}
+          onPress={handleCategoryPress}
+        />
       ))}
     </View>
   );
@@ -256,7 +250,7 @@ export default function Home({navigation}) {
     <Animated.View
       key={item.id}
       style={[styles.foodGridItem, getCardAnimatedStyle(popularCardAnims[index])]}>
-      <FoodCard item={item} onAdd={handleAddToCart} onPress={handleFoodPress} />
+      <FoodCard item={item} onPress={handleFoodPress} />
     </Animated.View>
   );
 
@@ -272,7 +266,7 @@ export default function Home({navigation}) {
         {/* Animated.View
             Fades in the Header. */}
         <Animated.View style={{opacity: headerOpacity}}>
-          <Header cartCount={cartCount} onCartPress={handleCartPress} />
+          <Header onCartPress={handleCartPress} />
         </Animated.View>
 
         {/* Animated.View

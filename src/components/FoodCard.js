@@ -16,21 +16,57 @@ Concepts Used:
 */
 
 // React + useRef for animation values.
-import React, {useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 
 // React Native components and Animated API.
 import {Animated, Image, Pressable, Text, View} from 'react-native';
 
 // Styles for FoodCard.
 import styles from './FoodCardStyles';
+import {
+  addToCart,
+  decreaseQuantity,
+  increaseQuantity,
+} from '../redux/slices/cartSlice';
 
 // React component
 // Props: item is food data, onAdd adds to cart, onPress opens details.
-export default function FoodCard({item, onAdd, onPress}) {
+export default function FoodCard({item, onPress}) {
   // Animated value for whole card press scale.
   const scale = useRef(new Animated.Value(1)).current;
   // Animated value for ADD button press scale.
   const addScale = useRef(new Animated.Value(1)).current;
+  const controlOpacity = useRef(new Animated.Value(1)).current;
+  const controlScale = useRef(new Animated.Value(1)).current;
+  const hasMounted = useRef(false);
+  const dispatch = useDispatch();
+  const cartItem = useSelector(state =>
+    state.cart.cartItems.find(currentItem => currentItem.id === item.id),
+  );
+  const isInCart = Boolean(cartItem);
+
+  useEffect(() => {
+    if (!hasMounted.current) {
+      hasMounted.current = true;
+      return;
+    }
+
+    controlOpacity.setValue(0);
+    controlScale.setValue(0.92);
+    Animated.parallel([
+      Animated.timing(controlOpacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(controlScale, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [controlOpacity, controlScale, isInCart]);
 
   // Function
   // Purpose: animate whole card scale.
@@ -48,7 +84,12 @@ export default function FoodCard({item, onAdd, onPress}) {
   // event.stopPropagation prevents parent Pressable from also firing.
   const handleAddPress = event => {
     event.stopPropagation();
-    onAdd(item);
+    dispatch(addToCart(item));
+  };
+
+  const handleQuantityPress = (event, action) => {
+    event.stopPropagation();
+    dispatch(action(item.id));
   };
 
   // Function
@@ -95,17 +136,44 @@ export default function FoodCard({item, onAdd, onPress}) {
           </View>
 
           {/* Animated.View scales the ADD button on press. */}
-          <Animated.View style={{transform: [{scale: addScale}]}}>
-            {/* Pressable triggers add-to-cart behavior. */}
-            <Pressable
-              onPress={handleAddPress}
-              onPressIn={() => animateAddScale(0.96)}
-              onPressOut={() => animateAddScale(1)}
-              style={styles.addButton}
-              accessibilityRole="button"
-              accessibilityLabel={`Add ${item.name} to cart`}>
-              <Text style={styles.addButtonText}>ADD</Text>
-            </Pressable>
+          <Animated.View
+            style={{
+              opacity: controlOpacity,
+              transform: [{scale: addScale}, {scale: controlScale}],
+            }}>
+            {isInCart ? (
+              <View style={styles.quantitySelector}>
+                <Pressable
+                  onPress={event => handleQuantityPress(event, decreaseQuantity)}
+                  onPressIn={() => animateAddScale(0.96)}
+                  onPressOut={() => animateAddScale(1)}
+                  style={styles.quantityButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease ${item.name} quantity`}>
+                  <Text style={styles.quantityButtonText}>−</Text>
+                </Pressable>
+                <Text style={styles.quantityText}>{cartItem.quantity}</Text>
+                <Pressable
+                  onPress={event => handleQuantityPress(event, increaseQuantity)}
+                  onPressIn={() => animateAddScale(0.96)}
+                  onPressOut={() => animateAddScale(1)}
+                  style={styles.quantityButton}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase ${item.name} quantity`}>
+                  <Text style={styles.quantityButtonText}>+</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={handleAddPress}
+                onPressIn={() => animateAddScale(0.96)}
+                onPressOut={() => animateAddScale(1)}
+                style={styles.addButton}
+                accessibilityRole="button"
+                accessibilityLabel={`Add ${item.name} to cart`}>
+                <Text style={styles.addButtonText}>ADD</Text>
+              </Pressable>
+            )}
           </Animated.View>
         </View>
       </Pressable>

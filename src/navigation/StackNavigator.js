@@ -79,7 +79,11 @@ export default function StackNavigator() {
           options={{animation: 'fade'}}
         />
         {/* Stack.Screen registers the Menu screen. */}
-        <Stack.Screen name={Routes.MENU} component={Menu} />
+        <Stack.Screen
+          name={Routes.MENU}
+          component={Menu}
+          options={{animation: 'slide_from_right'}}
+        />
         {/* Stack.Screen registers the FoodDetails screen. */}
         <Stack.Screen name={Routes.FOOD_DETAILS} component={FoodDetails} />
         {/* Stack.Screen registers the Cart screen. */}

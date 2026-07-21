@@ -19,6 +19,7 @@ Concepts Used:
 // useEffect runs badge animation when cart count changes.
 // useRef stores the Animated.Value for badge scale.
 import React, {useEffect, useRef} from 'react';
+import {useSelector} from 'react-redux';
 
 // React Native components
 // Animated animates the badge.
@@ -26,7 +27,7 @@ import React, {useEffect, useRef} from 'react';
 // Pressable makes cart touchable.
 // Text displays greeting.
 // View groups text.
-import {Animated, Image, Pressable, Text, View} from 'react-native';
+import {Animated, Image, Pressable, StyleSheet, Text, View} from 'react-native';
 
 // Third-party package
 // LinearGradient comes from react-native-linear-gradient.
@@ -43,10 +44,21 @@ const EMPLOYEE_GREETING = 'Aadit Sharma \u{1F44B}';
 // React component
 // Props: cartCount number, onCartPress function.
 // Returns JSX for the Home header.
-export default function Header({cartCount = 0, onCartPress}) {
+export default function Header({onCartPress}) {
+  const cartCount = useSelector(state => state.cart.totalItems);
   // Animated API
   // badgeScale controls the orange badge pop animation.
   const badgeScale = useRef(new Animated.Value(1)).current;
+  const cartBackgroundOpacity = useRef(new Animated.Value(0)).current;
+  const hasCartItems = cartCount > 0;
+
+  useEffect(() => {
+    Animated.timing(cartBackgroundOpacity, {
+      toValue: hasCartItems ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [cartBackgroundOpacity, hasCartItems]);
 
   // React Hook
   // Runs when cartCount changes.
@@ -93,21 +105,52 @@ export default function Header({cartCount = 0, onCartPress}) {
       {/* Pressable makes the cart button tappable. */}
       <Pressable
         onPress={onCartPress}
-        style={styles.cartButton}
+        style={[styles.cartButton, localStyles.cartButton]}
         accessibilityRole="button"
         accessibilityLabel="Open cart">
+        <Animated.View
+          pointerEvents="none"
+          style={[localStyles.cartBackground, {opacity: cartBackgroundOpacity}]}
+        />
         {/* Image displays cart.png from assets. */}
         <Image
           source={require('../assets/icons/cart.png')}
-          style={styles.cartIcon}
+          style={[styles.cartIcon, localStyles.activeCartIcon]}
           resizeMode="contain"
         />
         {/* Animated.View scales the badge when cartCount changes. */}
-        <Animated.View
-          style={[styles.badge, {transform: [{scale: badgeScale}]}]}>
-          <Text style={styles.badgeText}>{cartCount}</Text>
-        </Animated.View>
+        {hasCartItems && (
+          <Animated.View
+            style={[
+              styles.badge,
+              localStyles.activeBadge,
+              {transform: [{scale: badgeScale}]},
+            ]}>
+            <Text style={styles.badgeText}>{cartCount}</Text>
+          </Animated.View>
+        )}
       </Pressable>
     </LinearGradient>
   );
 }
+
+const localStyles = StyleSheet.create({
+  cartButton: {
+    backgroundColor: '#005BAC',
+  },
+  cartBackground: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: 27,
+    backgroundColor: '#F9A826',
+  },
+  activeCartIcon: {
+    tintColor: '#FFFFFF',
+  },
+  activeBadge: {
+    backgroundColor: '#E53935',
+  },
+});
