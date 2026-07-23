@@ -1,30 +1,7 @@
-/*
------------------------------------------
-File: categories.js
-
-Purpose:
-Stores category data for the Home screen.
-
-Concepts Used:
-- JavaScript array
-- JavaScript objects
-- Static image require()
-- Export
-
-Used By:
-Home.js -> CategoryCard.js
------------------------------------------
-*/
-
-// JavaScript array
-// Each object represents one category card.
 const categories = [
   {
-    // Unique ID used as React list key.
     id: 1,
-    // Category label shown to the user.
     name: 'Breakfast',
-    // Static image import for category icon.
     icon: require('../assets/icons/breakfast.png'),
   },
   {
@@ -59,6 +36,4 @@ const categories = [
   },
 ];
 
-// Export
-// Allows Home.js to import the category list.
 export default categories;

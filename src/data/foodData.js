@@ -1,27 +1,5 @@
-/*
------------------------------------------
-File: foodData.js
-
-Purpose:
-Stores dummy food data for the app.
-
-Concepts Used:
-- JavaScript arrays
-- JavaScript objects
-- Named exports
-- Static image require()
-
-Used By:
-Home.js imports popularItems.
------------------------------------------
-*/
-
-// Named export + array
-// Older category list. Currently not used by Home.js.
 export const categories = ['Breakfast', 'Lunch', 'Dinner', 'Snacks', 'Beverages'];
 
-// Named export + array of objects
-// Older "Today Special" data. Currently not rendered by Home.js.
 export const todaysSpecial = [
   {
     id: 'special-1',
@@ -61,21 +39,13 @@ export const todaysSpecial = [
   },
 ];
 
-// Named export + array of objects
-// Active food list used by Home.js.
 export const popularItems = [
   {
-    // Unique ID used by React rendering and animations.
     id: 'popular-1',
-    // Food name displayed in FoodCard.
     name: 'Idli Sambar',
-    // Food price displayed in FoodCard.
     price: 45,
-    // Rating displayed with star image.
     rating: 4.8,
-    // Category label for future filtering.
     category: 'Breakfast',
-    // Static image used by FoodCard.
     image: require('../assets/icons/idli dosa.png'),
   },
   {

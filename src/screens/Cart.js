@@ -111,7 +111,7 @@ export default function Cart({navigation}) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {flex: 1, backgroundColor: '#7cb3e3'},
+  safeArea: {flex: 1, backgroundColor: '#005BAC'},
   header: {height: 70, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, shadowColor: '#003A70', shadowOffset: {width: 0, height: 7}, shadowOpacity: 0.18, shadowRadius: 14, elevation: 8},
   headerButton: {width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center'},
   backIcon: {width: 30, height: 30, tintColor: '#FFFFFF'},

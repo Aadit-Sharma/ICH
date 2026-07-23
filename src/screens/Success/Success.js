@@ -21,8 +21,8 @@ import {useDispatch} from 'react-redux';
 
 // React Native layout and text components.
 import {Pressable, StyleSheet, Text, View} from 'react-native';
-import {clearCart} from '../redux/slices/cartSlice';
-import Routes from '../navigation/Routes';
+import {clearCart} from '../../redux/slices/cartSlice';
+import Routes from '../../navigation/Routes';
 
 // React component
 // This currently returns placeholder success UI.

@@ -12,14 +12,14 @@ import {
   View,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import SearchBar from '../components/SearchBar';
-import {popularItems} from '../data/foodData';
-import Routes from '../navigation/Routes';
+import SearchBar from '../../components/SearchBar';
+import {popularItems} from '../../data/foodData';
+import Routes from '../../navigation/Routes';
 import {
   addToCart,
   decreaseQuantity,
   increaseQuantity,
-} from '../redux/slices/cartSlice';
+} from '../../redux/slices/cartSlice';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -100,7 +100,7 @@ export default function Menu({navigation, route}) {
           accessibilityRole="button"
           accessibilityLabel="Open cart">
           <Image
-            source={require('../assets/icons/cart.png')}
+            source={require('../../assets/icons/cart.png')}
             style={styles.cartIcon}
             resizeMode="contain"
           />
