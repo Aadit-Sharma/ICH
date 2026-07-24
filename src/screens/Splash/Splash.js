@@ -64,7 +64,7 @@ export default function Splash({navigation}) {
     }, SPLASH_DURATION);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [dotsOpacity, logoOpacity, logoScale, navigation, textOpacity, textTranslate]);
 
   return (
     <View style={styles.container}>

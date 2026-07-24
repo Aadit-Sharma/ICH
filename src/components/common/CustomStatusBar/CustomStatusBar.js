@@ -1,7 +1,6 @@
 import React from "react";
 
 import { StatusBar } from "react-native";
-import styles from "./CustomStatusBarStyles";
 import { Colors } from "../../../theme";
 
 const CustomStatusBar = ({

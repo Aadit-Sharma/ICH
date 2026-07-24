@@ -16,7 +16,7 @@ const EmptyState = ({
 
     <View style={styles.container}>
 
-      <Text style={{fontSize:60}}>
+      <Text style={styles.icon}>
         📦
       </Text>
 

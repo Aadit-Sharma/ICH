@@ -20,6 +20,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
 
+  icon: {
+    fontSize: 70,
+  },
+
   title: {
     ...Typography.h2,
     color: Colors.primary,

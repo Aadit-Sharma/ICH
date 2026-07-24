@@ -1,6 +1,6 @@
 
 import React, {useEffect, useRef, useState} from 'react';
-import {Animated, ScrollView} from 'react-native';
+import {Animated, FlatList, ScrollView, View} from 'react-native';
 import {useSelector} from 'react-redux';
 
 import styles from './HomeStyles';
@@ -14,14 +14,18 @@ import {
 
 import {
   OfferBanner,
-  CategoryList,
   RecommendedSection,
 } from '../../components/home';
 
 import Routes from '../../navigation/Routes';
+import CategoryCard from '../../components/CategoryCard';
+import categories from '../../data/categories';
+
+const HOME_CATEGORY_NAMES = ['Breakfast', 'Lunch', 'Snacks', 'Beverages', 'Desserts'];
 
 export default function Home({navigation}) {
   const [searchText, setSearchText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(null);
   const cartCount = useSelector(state => state.cart.totalItems);
 
   // Screen fade animation
@@ -53,13 +57,18 @@ export default function Home({navigation}) {
       : hour >= 17 && hour < 21
         ? 'Good Evening'
         : 'Good Night';
+  const homeCategories = categories.filter(category =>
+    HOME_CATEGORY_NAMES.includes(category.name),
+  );
+
+  const handleCategoryPress = category => {
+    setSelectedCategory(category.name);
+    navigation.navigate(Routes.MENU, {category});
+  };
 
   return (
     <Animated.View
-      style={{
-        flex: 1,
-        opacity: screenOpacity,
-      }}>
+      style={[styles.mainContainer, {opacity: screenOpacity}]}>
       <ScreenContainer>
         <AppHeader
           greeting={greeting}
@@ -72,32 +81,53 @@ export default function Home({navigation}) {
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.container}>
-          <SearchBar
-            value={searchText}
-            onChangeText={setSearchText}
-            onClear={() => setSearchText('')}
-            placeholder="Search food..."
-          />
+          <View style={styles.searchSection}>
+            <SearchBar
+              value={searchText}
+              onChangeText={setSearchText}
+              onClear={() => setSearchText('')}
+              placeholder="Search food..."
+            />
+          </View>
 
-          <OfferBanner />
+          <View style={styles.offerSection}>
+            <OfferBanner />
+          </View>
 
-          <SectionTitle
-            title="Categories"
-            actionText="View All"
-          />
+          <View style={styles.categoriesSection}>
+            <SectionTitle
+              title="Categories"
+              actionText="View All"
+            />
+            <FlatList
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.categoryList}
+              data={homeCategories}
+              keyExtractor={category => String(category.id)}
+              renderItem={({item}) => (
+                <CategoryCard
+                  category={item}
+                  selected={item.name === selectedCategory}
+                  containerStyle={styles.categoryCardSpacing}
+                  onPress={handleCategoryPress}
+                />
+              )}
+            />
+          </View>
 
-          <CategoryList />
-
-          <SectionTitle
-            title="Recommended For You"
-            actionText="See More"
-          />
-          <RecommendedSection
-            navigation={navigation}
-            searchText={searchText}
-            onFoodPress={handleFoodPress}
-            onAdd={() => {}}
-          />
+          <View style={styles.recommendedSection}>
+            <SectionTitle
+              title="Recommended For You"
+              actionText="See More"
+            />
+            <RecommendedSection
+              navigation={navigation}
+              searchText={searchText}
+              onFoodPress={handleFoodPress}
+              onAdd={() => {}}
+            />
+          </View>
         </ScrollView>
       </ScreenContainer>
     </Animated.View>

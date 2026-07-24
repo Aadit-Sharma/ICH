@@ -2,7 +2,6 @@ import { StyleSheet } from "react-native";
 
 import {
   Colors,
-  Radius,
   Shadows,
   Spacing,
   Typography,

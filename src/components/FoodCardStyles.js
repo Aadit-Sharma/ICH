@@ -1,136 +1,39 @@
-/*
------------------------------------------
-File: FoodCardStyles.js
-
-Purpose:
-Styles reusable food cards.
-
-Concepts Used:
-- StyleSheet
-- Card shadows
-- Image sizing
-- Typography
-- Button styling
------------------------------------------
-*/
-
-// React Native StyleSheet import.
 import {StyleSheet} from 'react-native';
 
-// StyleSheet object for FoodCard.js.
-const styles = StyleSheet.create({
-  animatedContainer: {
-    // Makes card fill the grid column width.
-    width: '100%',
-  },
+export default StyleSheet.create({
   card: {
-    // White card background.
-    backgroundColor: '#FFFFFF',
-    // Rounded card corners.
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    padding: 12,
     borderRadius: 18,
-    // Internal spacing.
-    padding: 9,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E4E9F0',
     shadowColor: '#102A43',
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.16,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowOffset: {width: 0, height: 5},
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  image: {
-    // Image fills card width.
-    width: '100%',
-    // Image height.
-    height: 98,
-    // Rounded image corners.
-    borderRadius: 16,
-    marginBottom: 10,
-    overflow: 'hidden',
-  },
-  content: {
-    minHeight: 90,
-  },
-  name: {
-    color: '#102A43',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 0,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-  },
-  price: {
-    // NTPC blue price color.
-    color: '#005BAC',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0,
-  },
-  rating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  ratingIcon: {
-    width: 13,
-    height: 13,
-  },
-  ratingText: {
-    color: '#52606D',
-    fontSize: 12,
-    fontWeight: '700',
-    marginLeft: 3,
-    letterSpacing: 0,
-  },
-  addButton: {
-    // Full-width ADD button height.
-    height: 33,
-    // Rounded button corners.
-    borderRadius: 17,
-    backgroundColor: '#F9A826',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0,
-  },
-  quantitySelector: {
-    height: 33,
-    borderRadius: 17,
-    backgroundColor: '#005BAC',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    overflow: 'hidden',
-  },
-  quantityButton: {
-    width: 36,
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  quantityButtonText: {
-    color: '#FFFFFF',
-    fontSize: 22,
-    fontWeight: '900',
-    lineHeight: 24,
-  },
-  quantityText: {
-    color: '#FFFFFF',
-    fontSize: 19,
-    fontWeight: '700',
-  },
+  cardPressed: {opacity: 0.94},
+  imageWrap: {width: 102, height: 102, borderRadius: 14, overflow: 'hidden'},
+  image: {width: '100%', height: '100%', backgroundColor: '#EAF1F8'},
+  content: {flex: 1, minHeight: 102, marginLeft: 13, justifyContent: 'space-between'},
+  titleRow: {flexDirection: 'row', alignItems: 'center'},
+  name: {flex: 1, marginLeft: 7, color: '#102A43', fontSize: 16, fontWeight: '800'},
+  description: {marginTop: 4, color: '#627D98', fontSize: 12, lineHeight: 17},
+  vegIcon: {width: 15, height: 15, borderWidth: 1.5, borderColor: '#1E8E3E', borderRadius: 3, alignItems: 'center', justifyContent: 'center'},
+  vegDot: {width: 7, height: 7, borderRadius: 4, backgroundColor: '#1E8E3E'},
+  nonVegIcon: {borderColor: '#D93025'},
+  nonVegDot: {backgroundColor: '#D93025'},
+  metaRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 7},
+  rating: {color: '#52606D', fontSize: 12, fontWeight: '700'},
+  price: {color: '#005BAC', fontSize: 16, fontWeight: '900'},
+  addButton: {height: 34, marginTop: 9, borderRadius: 17, backgroundColor: '#F9A826', alignItems: 'center', justifyContent: 'center'},
+  addButtonText: {color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 0.4},
+  quantitySelector: {height: 34, marginTop: 9, borderRadius: 17, backgroundColor: '#005BAC', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden'},
+  quantityButton: {width: 40, height: '100%', alignItems: 'center', justifyContent: 'center'},
+  quantityButtonText: {color: '#FFFFFF', fontSize: 20, fontWeight: '900', lineHeight: 22},
+  quantityText: {color: '#FFFFFF', fontSize: 14, fontWeight: '900'},
 });
-
-export default styles;

@@ -13,7 +13,7 @@ const AppLogo = () => {
 
     <View style={styles.container}>
 
-      <Text style={{fontSize:70}}>
+      <Text style={styles.icon}>
         ☕
       </Text>
 

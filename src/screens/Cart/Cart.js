@@ -1,20 +1,124 @@
-import React from 'react';
+/*
+-----------------------------------------
+File: Cart.js
+
+Purpose:
+Professional Cart screen with item cards, removal animations,
+order summary calculations (Subtotal, GST, Service Charge, Grand Total),
+sticky checkout bottom bar, empty cart illustration, and Redux integration.
+-----------------------------------------
+*/
+
+import React, {useRef} from 'react';
+import {
+  Animated,
+  Image,
+  Pressable,
+  ScrollView,
+  StatusBar,
+  Text,
+  View,
+} from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
-import {Image, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import Routes from '../../navigation/Routes';
 import {
   clearCart,
   decreaseQuantity,
   increaseQuantity,
 } from '../../redux/slices/cartSlice';
-import Routes from '../../navigation/Routes';
+import styles from './CartStyles';
+
+// Individual Cart Item Card with Removal & Quantity Animations
+const CartItemCard = ({item, onIncrease, onDecrease}) => {
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleDecrease = () => {
+    if (item.quantity === 1) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 0.8,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        onDecrease(item.id);
+      });
+    } else {
+      onDecrease(item.id);
+    }
+  };
+
+  return (
+    <Animated.View
+      style={[
+        styles.itemCard,
+        {
+          opacity: fadeAnim,
+          transform: [{scale: scaleAnim}],
+        },
+      ]}>
+      <Image
+        source={item.image}
+        style={styles.itemImage}
+        resizeMode="cover"
+      />
+      <View style={styles.itemContent}>
+        <View style={styles.itemHeader}>
+          <Text style={styles.itemName} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.itemTotalPrice}>₹{item.price * item.quantity}</Text>
+        </View>
+
+        <Text style={styles.itemDescription} numberOfLines={1}>
+          {item.description || `Fresh ${item.name} prepared to order.`}
+        </Text>
+
+        <View style={styles.itemBottomRow}>
+          <Text style={styles.itemUnitPrice}>₹{item.price} each</Text>
+
+          <View style={styles.quantitySelector}>
+            <Pressable
+              onPress={handleDecrease}
+              style={styles.quantityBtn}
+              accessibilityRole="button"
+              accessibilityLabel={`Decrease ${item.name} quantity`}>
+              <Text style={styles.quantityBtnText}>−</Text>
+            </Pressable>
+
+            <Text style={styles.quantityText}>{item.quantity}</Text>
+
+            <Pressable
+              onPress={() => onIncrease(item.id)}
+              style={styles.quantityBtn}
+              accessibilityRole="button"
+              accessibilityLabel={`Increase ${item.name} quantity`}>
+              <Text style={styles.quantityBtnText}>+</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
 
 export default function Cart({navigation}) {
   const dispatch = useDispatch();
-  const {cartItems, totalAmount, totalItems} = useSelector(state => state.cart);
+  const {cartItems, totalAmount} = useSelector(state => state.cart);
 
-  const handlePlaceOrder = () => {
+  // Bill Calculations via Redux state
+  const subtotal = totalAmount || 0;
+  const gst = Math.round(subtotal * 0.05); // 5% GST
+  const serviceCharge = subtotal > 0 ? 15 : 0; // ₹15 Packaging & Service Fee
+  const grandTotal = subtotal + gst + serviceCharge;
+
+  const handleCheckout = () => {
     dispatch(clearCart());
     navigation.navigate(Routes.SUCCESS);
   };
@@ -23,13 +127,20 @@ export default function Cart({navigation}) {
     dispatch(clearCart());
   };
 
+  const handleIncrease = itemId => {
+    dispatch(increaseQuantity(itemId));
+  };
+
+  const handleDecrease = itemId => {
+    dispatch(decreaseQuantity(itemId));
+  };
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <LinearGradient
-        colors={['#005BAC', '#1976D2']}
-        start={{x: 0, y: 0}}
-        end={{x: 1, y: 1}}
-        style={styles.header}>
+    <View style={styles.mainContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="#005BAC" />
+
+      {/* HEADER */}
+      <View style={styles.header}>
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.headerButton}
@@ -41,7 +152,11 @@ export default function Cart({navigation}) {
             resizeMode="contain"
           />
         </Pressable>
-        <Text style={styles.title}>My Cart</Text>
+
+        <Text style={styles.headerTitle} numberOfLines={1}>
+          My Cart
+        </Text>
+
         <Pressable
           onPress={handleClearCart}
           style={styles.headerButton}
@@ -49,94 +164,104 @@ export default function Cart({navigation}) {
           accessibilityLabel="Clear cart">
           <Image
             source={require('../../assets/icons/cart.png')}
-            style={styles.clearCartIcon}
+            style={styles.deleteCartIcon}
             resizeMode="contain"
           />
-          {totalItems > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{totalItems}</Text>
-            </View>
-          )}
         </Pressable>
-      </LinearGradient>
-
-      <View style={styles.container}>
-        {cartItems.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Your cart is empty</Text>
-          </View>
-        ) : (
-          <>
-            <ScrollView
-              contentContainerStyle={styles.list}
-              showsVerticalScrollIndicator={false}>
-              {cartItems.map(item => (
-                <View key={item.id} style={styles.itemCard}>
-                  <Image source={item.image} style={styles.image} resizeMode="cover" />
-                  <View style={styles.itemDetails}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.price}>Rs. {item.price}</Text>
-                    <View style={styles.quantitySelector}>
-                      <Pressable
-                        onPress={() => dispatch(decreaseQuantity(item.id))}
-                        style={styles.quantityButton}>
-                        <Text style={styles.quantityButtonText}>-</Text>
-                      </Pressable>
-                      <Text style={styles.quantityText}>{item.quantity}</Text>
-                      <Pressable
-                        onPress={() => dispatch(increaseQuantity(item.id))}
-                        style={styles.quantityButton}>
-                        <Text style={styles.quantityButtonText}>+</Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                  <Text style={styles.itemTotal}>Rs. {item.price * item.quantity}</Text>
-                </View>
-              ))}
-            </ScrollView>
-            <View style={styles.footer}>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Grand Total</Text>
-                <Text style={styles.totalAmount}>Rs. {totalAmount}</Text>
-              </View>
-              <Pressable onPress={handlePlaceOrder} style={styles.placeOrderButton}>
-                <Text style={styles.placeOrderText}>PLACE ORDER</Text>
-              </Pressable>
-            </View>
-          </>
-        )}
       </View>
-    </SafeAreaView>
+
+      {/* BODY / CONTENT */}
+      {cartItems.length === 0 ? (
+        /* EMPTY CART STATE */
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIllustrationWrapper}>
+            <Image
+              source={require('../../assets/icons/cart.png')}
+              style={styles.emptyIcon}
+              resizeMode="contain"
+            />
+          </View>
+
+          <Text style={styles.emptyTitle}>Your cart is empty</Text>
+          <Text style={styles.emptySubtitle}>
+            Looks like you haven't added anything to your cart yet. Explore our delicious menu items!
+          </Text>
+
+          <Pressable
+            onPress={() => navigation.navigate(Routes.MENU)}
+            style={({pressed}) => [
+              styles.continueButton,
+              pressed && {opacity: 0.88},
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Continue Shopping">
+            <Text style={styles.continueButtonText}>Continue Shopping</Text>
+          </Pressable>
+        </View>
+      ) : (
+        /* POPULATED CART CONTENT */
+        <>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}>
+            {/* CART ITEMS */}
+            {cartItems.map(item => (
+              <CartItemCard
+                key={item.id}
+                item={item}
+                onIncrease={handleIncrease}
+                onDecrease={handleDecrease}
+              />
+            ))}
+
+            {/* BILL SUMMARY */}
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>Bill Summary</Text>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Item Subtotal</Text>
+                <Text style={styles.summaryValue}>₹{subtotal}</Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>GST (5%)</Text>
+                <Text style={styles.summaryValue}>₹{gst}</Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Service & Packaging</Text>
+                <Text style={styles.summaryValue}>₹{serviceCharge}</Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.grandTotalLabel}>Grand Total</Text>
+                <Text style={styles.grandTotalValue}>₹{grandTotal}</Text>
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* STICKY BOTTOM CHECKOUT BAR */}
+          <View style={styles.bottomBar}>
+            <View style={styles.bottomLeft}>
+              <Text style={styles.bottomTotalLabel}>Grand Total</Text>
+              <Text style={styles.bottomTotalPrice}>₹{grandTotal}</Text>
+            </View>
+
+            <Pressable
+              onPress={handleCheckout}
+              style={({pressed}) => [
+                styles.checkoutButton,
+                pressed && {opacity: 0.88},
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Proceed to Checkout">
+              <Text style={styles.checkoutButtonText}>Proceed to Checkout →</Text>
+            </Pressable>
+          </View>
+        </>
+      )}
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {flex: 1, backgroundColor: '#7cb3e3'},
-  header: {height: 70, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18, shadowColor: '#003A70', shadowOffset: {width: 0, height: 7}, shadowOpacity: 0.18, shadowRadius: 14, elevation: 8},
-  headerButton: {width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center'},
-  backIcon: {width: 30, height: 30, tintColor: '#FFFFFF'},
-  clearCartIcon: {width: 25, height: 25, tintColor: '#FFFFFF'},
-  title: {position: 'absolute', left: 70, right: 70, color: '#FFFFFF', fontSize: 21, fontWeight: '900', textAlign: 'center'},
-  badge: {position: 'absolute', top: 0, right: 0, minWidth: 19, height: 19, borderRadius: 10, backgroundColor: '#F9A826', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4},
-  badgeText: {color: '#FFFFFF', fontSize: 10, fontWeight: '900'},
-  container: {flex: 1, backgroundColor: '#F5F7FA', padding: 18},
-  emptyState: {flex: 1, alignItems: 'center', justifyContent: 'center'},
-  emptyText: {color: '#52606D', fontSize: 16, fontWeight: '700'},
-  list: {paddingBottom: 16},
-  itemCard: {backgroundColor: '#FFFFFF', borderRadius: 18, padding: 10, marginBottom: 14, flexDirection: 'row', alignItems: 'center', shadowColor: '#102A43', shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4},
-  image: {width: 78, height: 78, borderRadius: 14},
-  itemDetails: {flex: 1, marginLeft: 12},
-  name: {color: '#102A43', fontSize: 15, fontWeight: '800'},
-  price: {color: '#005BAC', fontSize: 13, fontWeight: '800', marginTop: 5},
-  quantitySelector: {width: 102, height: 32, borderRadius: 16, backgroundColor: '#F9A826', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, overflow: 'hidden'},
-  quantityButton: {width: 32, height: '100%', alignItems: 'center', justifyContent: 'center'},
-  quantityButtonText: {color: '#FFFFFF', fontSize: 20, fontWeight: '900', lineHeight: 22},
-  quantityText: {color: '#FFFFFF', fontSize: 14, fontWeight: '900'},
-  itemTotal: {alignSelf: 'flex-start', color: '#102A43', fontSize: 13, fontWeight: '900'},
-  footer: {backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16, shadowColor: '#102A43', shadowOffset: {width: 0, height: 6}, shadowOpacity: 0.08, shadowRadius: 12, elevation: 4},
-  totalRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14},
-  totalLabel: {color: '#102A43', fontSize: 17, fontWeight: '800'},
-  totalAmount: {color: '#005BAC', fontSize: 19, fontWeight: '900'},
-  placeOrderButton: {height: 48, borderRadius: 24, backgroundColor: '#F9A826', alignItems: 'center', justifyContent: 'center'},
-  placeOrderText: {color: '#FFFFFF', fontSize: 14, fontWeight: '900'},
-});

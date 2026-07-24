@@ -2,8 +2,6 @@ import { StyleSheet } from "react-native";
 
 import {
   Colors,
-  Radius,
-  Spacing,
   Typography,
 } from "../../../theme";
 

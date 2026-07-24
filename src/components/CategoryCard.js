@@ -26,7 +26,7 @@ import styles from './CategoryCardStyles';
 
 // React component
 // Props: category object, optional onPress callback.
-export default function CategoryCard({category, onPress}) {
+export default function CategoryCard({category, containerStyle, onPress, selected}) {
   // Animated value
   // Controls scale when user presses the category card.
   const scale = useRef(new Animated.Value(1)).current;
@@ -53,15 +53,21 @@ export default function CategoryCard({category, onPress}) {
 
   return (
     // Animated.View applies scale transform to the whole card.
-    <Animated.View style={[styles.animatedContainer, {transform: [{scale}]}]}>
+    <Animated.View
+      style={[
+        styles.animatedContainer,
+        containerStyle,
+        {transform: [{scale}]},
+      ]}>
       {/* Pressable handles touch events. */}
       <Pressable
         onPress={handlePress}
         onPressIn={() => animateScale(0.96)}
         onPressOut={() => animateScale(1)}
-        style={styles.card}
+        style={[styles.card, selected && styles.selectedCard]}
         accessibilityRole="button"
-        accessibilityLabel={`${category.name} category`}>
+        accessibilityLabel={`${category.name} category`}
+        accessibilityState={{selected}}>
         {/* View creates the circular pastel icon background. */}
         <View style={styles.iconCircle}>
           {/* Image displays category.icon from data/categories.js. */}

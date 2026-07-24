@@ -15,6 +15,10 @@ const styles = StyleSheet.create({
     padding: Spacing.xl,
   },
 
+  icon: {
+    fontSize: 60,
+  },
+
   title: {
     ...Typography.h3,
 

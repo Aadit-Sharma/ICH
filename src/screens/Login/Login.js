@@ -13,7 +13,6 @@ import {
   Image,
   View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 
 import Routes from '../../navigation/Routes';
 import styles from './LoginStyles';
@@ -108,7 +107,6 @@ export default function Login({navigation}) {
           useNativeDriver: true,
         }).start(({finished}) => {
           if (finished) {
-            console.log("Navigating to Home...");
             navigation.replace(Routes.HOME);
           }
         });
