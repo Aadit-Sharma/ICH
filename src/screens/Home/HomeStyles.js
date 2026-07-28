@@ -5,21 +5,36 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
+  safeAreaContainer: {
+    backgroundColor: '#005BAC',
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   container: {
     display: 'flex',
     flexDirection: 'column',
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: 16,
     paddingBottom: Spacing.xxl,
   },
   searchSection: {
-    display: 'flex',
-    flexDirection: 'column',
-    marginBottom: Spacing.sm,
+    paddingTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
   },
   offerSection: {
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: Spacing.sm,
+    marginTop: 0,
+    marginBottom: 24,
+    borderRadius: 24,
+    shadowColor: '#005BAC',
+    shadowOffset: {width: 0, height: 9},
+    shadowOpacity: 0.14,
+    shadowRadius: 18,
+    elevation: 5,
   },
   categoriesSection: {
     display: 'flex',
@@ -27,10 +42,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   categoryList: {
-    paddingTop: 12,
-    paddingRight: 12,
+    paddingTop: 14,
+    paddingRight: 16,
+    paddingBottom: 8,
   },
-  categoryCardSpacing: {marginRight: 12},
+  categoryAnimation: {
+    marginRight: 16,
+  },
+  categoryCardSpacing: {marginRight: 0},
   recommendedSection: {
     display: 'flex',
     flexDirection: 'column',

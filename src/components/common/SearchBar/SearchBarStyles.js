@@ -9,7 +9,7 @@ import {
 
 const styles = StyleSheet.create({
   container: {
-    height: 58,
+    height: 54,
 
     flexDirection: "row",
 
@@ -17,11 +17,11 @@ const styles = StyleSheet.create({
 
     backgroundColor: Colors.white,
 
-    borderRadius: 29,
+    borderRadius: 16,
 
     paddingHorizontal: 18,
 
-    marginBottom: Spacing.lg,
+    marginBottom: 0,
 
     ...Shadows.small,
   },

@@ -27,7 +27,15 @@ import {useSelector} from 'react-redux';
 // Pressable makes cart touchable.
 // Text displays greeting.
 // View groups text.
-import {Animated, Image, Pressable, StyleSheet, Text, View} from 'react-native';
+import {
+  Animated,
+  Image,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 // Third-party package
 // LinearGradient comes from react-native-linear-gradient.
@@ -37,20 +45,30 @@ import LinearGradient from 'react-native-linear-gradient';
 // Component styles.
 import styles from './HeaderStyles';
 
-// JavaScript constant
-// Unicode escape renders the waving hand emoji safely.
-const EMPLOYEE_GREETING = 'Aadit Sharma \u{1F44B}';
-
 // React component
 // Props: cartCount number, onCartPress function.
 // Returns JSX for the Home header.
-export default function Header({onCartPress}) {
+export default function Header({
+  greeting = 'Good Morning',
+  username = 'Aadit Sharma',
+  subtitle = 'Indian Coffee House',
+  onCartPress,
+}) {
   const cartCount = useSelector(state => state.cart.totalItems);
   // Animated API
   // badgeScale controls the orange badge pop animation.
   const badgeScale = useRef(new Animated.Value(1)).current;
   const cartBackgroundOpacity = useRef(new Animated.Value(0)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
   const hasCartItems = cartCount > 0;
+
+  useEffect(() => {
+    Animated.timing(headerOpacity, {
+      toValue: 1,
+      duration: 480,
+      useNativeDriver: true,
+    }).start();
+  }, [headerOpacity]);
 
   useEffect(() => {
     Animated.timing(cartBackgroundOpacity, {
@@ -90,53 +108,57 @@ export default function Header({onCartPress}) {
   return (
     // LinearGradient component
     // Creates the blue gradient header background.
-    <LinearGradient
-      colors={['#005BAC', '#1976D2']}
-      start={{x: 0, y: 0}}
-      end={{x: 1, y: 1}}
-      style={styles.container}>
-      {/* View groups the greeting text. */}
-      <View style={styles.copy}>
-        <Text style={styles.greeting}>Good Morning</Text>
-        <Text style={styles.employeeName}>{EMPLOYEE_GREETING}</Text>
-        <Text style={styles.subtitle}>Indian Coffee House</Text>
-      </View>
+    <Animated.View style={{opacity: headerOpacity}}>
+      <LinearGradient
+        colors={['#004E99', '#0875C9', '#2189D1']}
+        start={{x: 0, y: 0}}
+        end={{x: 1, y: 1}}
+        style={styles.container}>
+        <SafeAreaView style={styles.safeArea}>
+          <Text pointerEvents="none" style={styles.watermark}>{'\u2615'}</Text>
+          <View style={styles.copy}>
+            <Text style={styles.greeting}>{greeting}</Text>
+            <Text style={styles.employeeName}>{username} {'\u{1F44B}'}</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          </View>
 
       {/* Pressable makes the cart button tappable. */}
-      <Pressable
-        onPress={onCartPress}
-        style={[styles.cartButton, localStyles.cartButton]}
-        accessibilityRole="button"
-        accessibilityLabel="Open cart">
-        <Animated.View
-          pointerEvents="none"
-          style={[localStyles.cartBackground, {opacity: cartBackgroundOpacity}]}
-        />
-        {/* Image displays cart.png from assets. */}
-        <Image
-          source={require('../assets/icons/cart.png')}
-          style={[styles.cartIcon, localStyles.activeCartIcon]}
-          resizeMode="contain"
-        />
-        {/* Animated.View scales the badge when cartCount changes. */}
-        {hasCartItems && (
-          <Animated.View
-            style={[
-              styles.badge,
-              localStyles.activeBadge,
-              {transform: [{scale: badgeScale}]},
-            ]}>
-            <Text style={styles.badgeText}>{cartCount}</Text>
-          </Animated.View>
-        )}
-      </Pressable>
-    </LinearGradient>
+          <Pressable
+            onPress={onCartPress}
+            style={[styles.cartButton, localStyles.cartButton]}
+            accessibilityRole="button"
+            accessibilityLabel="Open cart">
+            <Animated.View
+              pointerEvents="none"
+              style={[localStyles.cartBackground, {opacity: cartBackgroundOpacity}]}
+            />
+            <Image
+              source={require('../assets/icons/cart.png')}
+              style={[styles.cartIcon, localStyles.activeCartIcon]}
+              resizeMode="contain"
+            />
+            {hasCartItems && (
+              <Animated.View
+                style={[
+                  styles.badge,
+                  localStyles.activeBadge,
+                  {transform: [{scale: badgeScale}]},
+                ]}>
+                <Text style={styles.badgeText}>{cartCount}</Text>
+              </Animated.View>
+            )}
+          </Pressable>
+        </SafeAreaView>
+      </LinearGradient>
+    </Animated.View>
   );
 }
 
 const localStyles = StyleSheet.create({
   cartButton: {
-    backgroundColor: '#005BAC',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.32)',
   },
   cartBackground: {
     position: 'absolute',
@@ -145,7 +167,7 @@ const localStyles = StyleSheet.create({
     bottom: 0,
     left: 0,
     borderRadius: 27,
-    backgroundColor: '#F9A826',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   activeCartIcon: {
     tintColor: '#FFFFFF',

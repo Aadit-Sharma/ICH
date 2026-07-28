@@ -8,15 +8,18 @@ import {
 
 const styles = StyleSheet.create({
   container: {
-    minHeight: 160,
+    height: 155,
 
-    borderRadius: 30,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
 
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.xl,
+    paddingVertical: 0,
 
-    marginTop: Spacing.md,
-    marginBottom: Spacing.lg,
+    marginTop: 0,
+    marginBottom: 0,
 
     shadowColor: Colors.primary,
     shadowOffset: {

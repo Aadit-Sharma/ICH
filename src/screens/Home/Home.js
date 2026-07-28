@@ -28,16 +28,45 @@ export default function Home({navigation}) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const cartCount = useSelector(state => state.cart.totalItems);
 
-  // Screen fade animation
   const screenOpacity = useRef(new Animated.Value(0)).current;
+  const searchTranslateY = useRef(new Animated.Value(-18)).current;
+  const bannerOpacity = useRef(new Animated.Value(0)).current;
+  const categoryAnimations = useRef(
+    HOME_CATEGORY_NAMES.map(() => new Animated.Value(0)),
+  ).current;
 
   useEffect(() => {
-    Animated.timing(screenOpacity, {
-      toValue: 1,
-      duration: 350,
-      useNativeDriver: true,
-    }).start();
-  }, [screenOpacity]);
+    Animated.parallel([
+      Animated.timing(screenOpacity, {
+        toValue: 1,
+        duration: 420,
+        useNativeDriver: true,
+      }),
+      Animated.spring(searchTranslateY, {
+        toValue: 0,
+        friction: 8,
+        tension: 70,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bannerOpacity, {
+        toValue: 1,
+        duration: 420,
+        delay: 120,
+        useNativeDriver: true,
+      }),
+      Animated.stagger(
+        75,
+        categoryAnimations.map(animation =>
+          Animated.spring(animation, {
+            toValue: 1,
+            friction: 7,
+            tension: 75,
+            useNativeDriver: true,
+          }),
+        ),
+      ),
+    ]).start();
+  }, [bannerOpacity, categoryAnimations, screenOpacity, searchTranslateY]);
 
   const handleCartPress = () => {
     navigation.navigate(Routes.CART);
@@ -69,7 +98,7 @@ export default function Home({navigation}) {
   return (
     <Animated.View
       style={[styles.mainContainer, {opacity: screenOpacity}]}>
-      <ScreenContainer>
+      <ScreenContainer style={styles.safeAreaContainer}>
         <AppHeader
           greeting={greeting}
           username="Anushi"
@@ -78,21 +107,26 @@ export default function Home({navigation}) {
           onCartPress={handleCartPress}
         />
 
+        <Animated.View
+          style={[
+            styles.searchSection,
+            {transform: [{translateY: searchTranslateY}]},
+          ]}>
+          <SearchBar
+            value={searchText}
+            onChangeText={setSearchText}
+            onClear={() => setSearchText('')}
+            placeholder="Search food, beverages..."
+          />
+        </Animated.View>
+
         <ScrollView
+          style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.container}>
-          <View style={styles.searchSection}>
-            <SearchBar
-              value={searchText}
-              onChangeText={setSearchText}
-              onClear={() => setSearchText('')}
-              placeholder="Search food..."
-            />
-          </View>
-
-          <View style={styles.offerSection}>
+          <Animated.View style={[styles.offerSection, {opacity: bannerOpacity}]}>
             <OfferBanner />
-          </View>
+          </Animated.View>
 
           <View style={styles.categoriesSection}>
             <SectionTitle
@@ -105,14 +139,40 @@ export default function Home({navigation}) {
               contentContainerStyle={styles.categoryList}
               data={homeCategories}
               keyExtractor={category => String(category.id)}
-              renderItem={({item}) => (
-                <CategoryCard
-                  category={item}
-                  selected={item.name === selectedCategory}
-                  containerStyle={styles.categoryCardSpacing}
-                  onPress={handleCategoryPress}
-                />
-              )}
+              renderItem={({item, index}) => {
+                const categoryAnimation = categoryAnimations[index];
+
+                return (
+                  <Animated.View
+                  style={[
+                    styles.categoryAnimation,
+                    {
+                      opacity: categoryAnimation,
+                      transform: [
+                        {
+                          translateY: categoryAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [18, 0],
+                          }),
+                        },
+                        {
+                          scale: categoryAnimation.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.94, 1],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}>
+                  <CategoryCard
+                    category={item}
+                    selected={item.name === selectedCategory}
+                    containerStyle={styles.categoryCardSpacing}
+                    onPress={handleCategoryPress}
+                  />
+                  </Animated.View>
+                );
+              }}
             />
           </View>
 
