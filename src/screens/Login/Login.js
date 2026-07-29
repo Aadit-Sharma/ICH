@@ -13,12 +13,12 @@ import {
   Image,
   View,
 } from 'react-native';
-
+import {loginUser} from '../../services/authService';
 import Routes from '../../navigation/Routes';
 import styles from './LoginStyles';
-
-const DEMO_EMPLOYEE_ID = '574839';
-const DEMO_PASSWORD = 'Ntpc@123';
+const employeeMap = {
+  574839: 'emilys',
+};
 
 export default function Login({navigation}) {
   const buttonScale = useRef(new Animated.Value(1)).current;
@@ -82,48 +82,77 @@ export default function Login({navigation}) {
   };
 
   const handleLogin = async () => {
-    if (!validateForm()) {
+  if (!validateForm()) {
+    return;
+  }
+
+  let shouldResetLoading = true;
+
+  try {
+    setIsLoading(true);
+
+    // Convert Employee ID to DummyJSON username
+    const username = employeeMap[employeeId];
+
+    if (!username) {
+      Alert.alert(
+        'Login Failed',
+        'Employee ID is not registered.',
+      );
       return;
     }
 
-    let shouldResetLoading = true;
+    // Call DummyJSON Login API
+    const result = await loginUser(username, password);
 
-    try {
-      setIsLoading(true);
+    if (result.success) {
+      shouldResetLoading = false;
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Save login state
+      await AsyncStorage.setItem('isLoggedIn', 'true');
 
-      if (
-        employeeId === DEMO_EMPLOYEE_ID &&
-        password === DEMO_PASSWORD
-      ) {
-        shouldResetLoading = false;
+      // Save access token
+      await AsyncStorage.setItem(
+        'accessToken',
+        result.data.accessToken,
+      );
 
-        await AsyncStorage.setItem('isLoggedIn', 'true');
+      // (Optional) Save user details
+      await AsyncStorage.setItem(
+        'user',
+        JSON.stringify(result.data),
+      );
 
-        Animated.timing(screenOpacity, {
-          toValue: 0,
-          duration: 260,
-          useNativeDriver: true,
-        }).start(({finished}) => {
-          if (finished) {
-            navigation.replace(Routes.HOME);
-          }
-        });
+      // Fade animation
+      Animated.timing(screenOpacity, {
+        toValue: 0,
+        duration: 260,
+        useNativeDriver: true,
+      }).start(({finished}) => {
+        if (finished) {
+          navigation.replace(Routes.HOME);
+        }
+      });
 
-        return;
-      }
-
-      Alert.alert('Invalid Employee ID or Password');
-    } catch (error) {
-      Alert.alert('Login failed', 'Please try again.');
-    } finally {
-      if (shouldResetLoading) {
-        setIsLoading(false);
-      }
+      return;
     }
-  };
 
+    Alert.alert(
+      'Login Failed',
+      result.data.message || 'Invalid Employee ID or Password',
+    );
+  } catch (error) {
+    Alert.alert(
+      'Login Failed',
+      'Something went wrong. Please try again.',
+    );
+    console.log(error);
+  } finally {
+    if (shouldResetLoading) {
+      setIsLoading(false);
+    }
+  }
+};
   return (
     <Animated.View
       style={[
