@@ -41,7 +41,7 @@ export default function FoodCard({item, onPress}) {
   }, [controlOpacity, controlScale, isInCart]);
 
   const updateCart = (event, action) => {
-    event.stopPropagation();
+    event?.stopPropagation?.();
     dispatch(action);
   };
 
@@ -87,6 +87,7 @@ export default function FoodCard({item, onPress}) {
               <Pressable
                 onPress={event => updateCart(event, decreaseQuantity(item.id))}
                 style={styles.quantityButton}
+                hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={`Decrease ${item.name} quantity`}>
                 <Text style={styles.quantityButtonText}>−</Text>
@@ -95,6 +96,7 @@ export default function FoodCard({item, onPress}) {
               <Pressable
                 onPress={event => updateCart(event, increaseQuantity(item.id))}
                 style={styles.quantityButton}
+                hitSlop={8}
                 accessibilityRole="button"
                 accessibilityLabel={`Increase ${item.name} quantity`}>
                 <Text style={styles.quantityButtonText}>+</Text>
@@ -104,6 +106,7 @@ export default function FoodCard({item, onPress}) {
             <Pressable
               onPress={event => updateCart(event, addToCart(item))}
               style={styles.addButton}
+              hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel={`Add ${item.name} to cart`}>
               <Text style={styles.addButtonText}>ADD</Text>

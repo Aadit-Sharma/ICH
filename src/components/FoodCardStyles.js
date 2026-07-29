@@ -30,10 +30,10 @@ export default StyleSheet.create({
   metaRow: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 7},
   rating: {color: '#52606D', fontSize: 12, fontWeight: '700'},
   price: {color: '#005BAC', fontSize: 16, fontWeight: '900'},
-  addButton: {height: 34, marginTop: 9, borderRadius: 17, backgroundColor: '#F9A826', alignItems: 'center', justifyContent: 'center'},
+  addButton: {height: 34, minWidth: 90, marginTop: 9, borderRadius: 17, backgroundColor: '#F9A826', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16},
   addButtonText: {color: '#FFFFFF', fontSize: 13, fontWeight: '900', letterSpacing: 0.4},
-  quantitySelector: {height: 34, marginTop: 9, borderRadius: 17, backgroundColor: '#005BAC', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden'},
+  quantitySelector: {minWidth: 120, height: 34, marginTop: 9, borderRadius: 17, backgroundColor: '#005BAC', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', overflow: 'hidden', paddingHorizontal: 4},
   quantityButton: {width: 40, height: '100%', alignItems: 'center', justifyContent: 'center'},
   quantityButtonText: {color: '#FFFFFF', fontSize: 20, fontWeight: '900', lineHeight: 22},
-  quantityText: {color: '#FFFFFF', fontSize: 14, fontWeight: '900'},
+  quantityText: {minWidth: 26, textAlign: 'center', color: '#FFFFFF', fontSize: 14, fontWeight: '900'},
 });

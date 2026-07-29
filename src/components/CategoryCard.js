@@ -26,7 +26,7 @@ import styles from './CategoryCardStyles';
 
 // React component
 // Props: category object, optional onPress callback.
-export default function CategoryCard({category, containerStyle, onPress, selected}) {
+export default function CategoryCard({category, containerStyle, cardStyle, onPress, selected}) {
   // Animated value
   // Controls scale when user presses the category card.
   const scale = useRef(new Animated.Value(1)).current;
@@ -64,7 +64,7 @@ export default function CategoryCard({category, containerStyle, onPress, selecte
         onPress={handlePress}
         onPressIn={() => animateScale(0.96)}
         onPressOut={() => animateScale(1)}
-        style={[styles.card, selected && styles.selectedCard]}
+        style={[styles.card, cardStyle, selected && styles.selectedCard]}
         accessibilityRole="button"
         accessibilityLabel={`${category.name} category`}
         accessibilityState={{selected}}>

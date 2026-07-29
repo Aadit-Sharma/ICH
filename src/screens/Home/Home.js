@@ -95,6 +95,10 @@ export default function Home({navigation}) {
     navigation.navigate(Routes.MENU, {category});
   };
 
+  const handleViewAll = () => navigation.navigate(Routes.MENU, {mode: 'all-categories'});
+
+  const handleSeeMore = () => navigation.navigate(Routes.MENU, {category: 'All'});
+
   return (
     <Animated.View
       style={[styles.mainContainer, {opacity: screenOpacity}]}>
@@ -132,10 +136,17 @@ export default function Home({navigation}) {
             <SectionTitle
               title="Categories"
               actionText="View All"
+              onPress={handleViewAll}
             />
             <FlatList
               horizontal
+              bounces
+              directionalLockEnabled
+              nestedScrollEnabled
+              pagingEnabled={false}
               showsHorizontalScrollIndicator={false}
+              snapToAlignment="start"
+              style={styles.categoryListViewport}
               contentContainerStyle={styles.categoryList}
               data={homeCategories}
               keyExtractor={category => String(category.id)}
@@ -168,6 +179,7 @@ export default function Home({navigation}) {
                     category={item}
                     selected={item.name === selectedCategory}
                     containerStyle={styles.categoryCardSpacing}
+                    cardStyle={styles.categoryCard}
                     onPress={handleCategoryPress}
                   />
                   </Animated.View>
@@ -180,6 +192,7 @@ export default function Home({navigation}) {
             <SectionTitle
               title="Recommended For You"
               actionText="See More"
+              onPress={handleSeeMore}
             />
             <RecommendedSection
               navigation={navigation}

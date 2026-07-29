@@ -10,14 +10,18 @@ import {
 import {useSelector} from 'react-redux';
 import FoodCard from '../../components/FoodCard';
 import SearchBar from '../../components/SearchBar';
+import categories from '../../data/categories';
 import {popularItems} from '../../data/foodData';
 import Routes from '../../navigation/Routes';
 
 export default function Menu({navigation, route}) {
   const totalItems = useSelector(state => state.cart.totalItems);
   const [searchText, setSearchText] = useState('');
-  const selectedCategory = route.params?.category?.name;
-  const categoryName = selectedCategory || 'Menu';
+  const [selectedCategory, setSelectedCategory] = useState(route.params?.category?.name);
+  const isAllCategoriesMode = route.params?.mode === 'all-categories';
+  const categoryName = isAllCategoriesMode
+    ? selectedCategory || 'All Categories'
+    : selectedCategory || 'Menu';
 
   const visibleItems = useMemo(() => {
     const query = searchText.trim().toLowerCase();
@@ -79,6 +83,29 @@ export default function Menu({navigation, route}) {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.listContent}>
+          {isAllCategoriesMode && (
+            <View style={styles.categoriesGrid}>
+              {categories.map(category => {
+                const isSelected = selectedCategory === category.name;
+
+                return (
+                  <Pressable
+                    key={category.id}
+                    onPress={() => setSelectedCategory(category.name)}
+                    style={[styles.categoryCard, isSelected && styles.selectedCategoryCard]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Show ${category.name} menu items`}
+                    accessibilityState={{selected: isSelected}}>
+                    <Image source={category.icon} style={styles.categoryIcon} resizeMode="contain" />
+                    <Text style={[styles.categoryLabel, isSelected && styles.selectedCategoryLabel]} numberOfLines={2}>
+                      {category.name}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
           {visibleItems.map(item => (
             <FoodCard
               key={item.id}
@@ -157,6 +184,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   allChipText: {color: '#FFFFFF', fontSize: 13, fontWeight: '800'},
+  categoriesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  categoryCard: {
+    width: '48%',
+    minHeight: 118,
+    marginBottom: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  selectedCategoryCard: {borderColor: '#005BAC', backgroundColor: '#EAF4FF'},
+  categoryIcon: {width: 42, height: 42, marginBottom: 10},
+  categoryLabel: {color: '#1E293B', fontSize: 14, fontWeight: '700', textAlign: 'center'},
+  selectedCategoryLabel: {color: '#005BAC'},
   listContent: {paddingBottom: 44},
   emptyState: {alignItems: 'center', paddingTop: 64},
   emptyText: {color: '#52606D', fontSize: 15, fontWeight: '600'},

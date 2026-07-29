@@ -1,36 +1,15 @@
-/*
------------------------------------------
-File: HeaderStyles.js
 
-Purpose:
-Styles the reusable Home header.
-
-Concepts Used:
-- StyleSheet
-- Flexbox
-- Shadows
-- Typography
-- Absolute positioning
------------------------------------------
-*/
-
-// React Native StyleSheet import.
 import {StyleSheet} from 'react-native';
 
-// StyleSheet object for Header.js.
 const styles = StyleSheet.create({
   container: {
-    // Places greeting and cart button in a horizontal row.
     flexDirection: 'row',
-    // Centers children vertically.
-    // Fixed gradient header height.
+   
     height: 165,
-    // Keep the header edge straight across the full screen width.
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
-    // Inner left/right space.
     paddingHorizontal: 0,
     paddingVertical: 0,
     marginBottom: 0,
@@ -68,7 +47,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0,
   },
   cartButton: {
-    // Button size and circular shape.
     width: 54,
     height: 54,
     borderRadius: 27,
@@ -98,14 +76,12 @@ const styles = StyleSheet.create({
     height: 27,
   },
   badge: {
-    // Badge can grow wider if number has more digits.
     minWidth: 20,
     height: 20,
     borderRadius: 10,
     backgroundColor: '#F9A826',
     alignItems: 'center',
     justifyContent: 'center',
-    // Absolute places badge on corner of cart button.
     position: 'absolute',
     top: -3,
     right: -3,

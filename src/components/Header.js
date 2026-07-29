@@ -1,32 +1,8 @@
-/*
------------------------------------------
-File: Header.js
 
-Purpose:
-Reusable Home header with greeting, gradient background, cart icon, and animated badge.
-
-Concepts Used:
-- React component
-- useEffect/useRef hooks
-- Animated API
-- Image assets
-- Pressable
-- LinearGradient
------------------------------------------
-*/
-
-// React + Hooks
-// useEffect runs badge animation when cart count changes.
-// useRef stores the Animated.Value for badge scale.
 import React, {useEffect, useRef} from 'react';
 import {useSelector} from 'react-redux';
 
-// React Native components
-// Animated animates the badge.
-// Image displays cart.png.
-// Pressable makes cart touchable.
-// Text displays greeting.
-// View groups text.
+
 import {
   Animated,
   Image,
@@ -37,17 +13,10 @@ import {
   View,
 } from 'react-native';
 
-// Third-party package
-// LinearGradient comes from react-native-linear-gradient.
-// It creates the blue gradient background.
 import LinearGradient from 'react-native-linear-gradient';
 
-// Component styles.
 import styles from './HeaderStyles';
 
-// React component
-// Props: cartCount number, onCartPress function.
-// Returns JSX for the Home header.
 export default function Header({
   greeting = 'Good Morning',
   username = 'Aadit Sharma',
@@ -78,17 +47,14 @@ export default function Header({
     }).start();
   }, [cartBackgroundOpacity, hasCartItems]);
 
-  // React Hook
-  // Runs when cartCount changes.
+  
   useEffect(() => {
-    // Guard clause
-    // Do not animate when badge count is zero.
+    
     if (cartCount < 1) {
       return;
     }
 
-    // Animated sequence
-    // Badge grows then returns to normal size.
+    
     Animated.sequence([
       Animated.spring(badgeScale, {
         toValue: 1.22,
@@ -106,8 +72,7 @@ export default function Header({
   }, [badgeScale, cartCount]);
 
   return (
-    // LinearGradient component
-    // Creates the blue gradient header background.
+    
     <Animated.View style={{opacity: headerOpacity}}>
       <LinearGradient
         colors={['#004E99', '#0875C9', '#2189D1']}

@@ -43,13 +43,16 @@ const styles = StyleSheet.create({
   },
   categoryList: {
     paddingTop: 14,
-    paddingRight: 16,
+    paddingHorizontal: 16,
+    paddingRight: 32,
     paddingBottom: 8,
   },
+  categoryListViewport: {marginHorizontal: -16},
   categoryAnimation: {
-    marginRight: 16,
+    marginRight: 0,
   },
-  categoryCardSpacing: {marginRight: 0},
+  categoryCardSpacing: {marginRight: 16},
+  categoryCard: {width: 96},
   recommendedSection: {
     display: 'flex',
     flexDirection: 'column',

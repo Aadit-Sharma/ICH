@@ -9,7 +9,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import Splash from '../screens/Splash';
 import Login from '../screens/Login';
-import Home from '../screens/Home';
+import MainTabs from './MainTabs';
 import Menu from '../screens/Menu';
 import FoodDetails from '../screens/FoodDetails';
 import Cart from '../screens/Cart';
@@ -37,7 +37,7 @@ export default function StackNavigator() {
         <Stack.Screen name={Routes.LOGIN} component={Login} />
         <Stack.Screen
           name={Routes.HOME}
-          component={Home}
+          component={MainTabs}
           options={{animation: 'fade'}}
         />
         <Stack.Screen

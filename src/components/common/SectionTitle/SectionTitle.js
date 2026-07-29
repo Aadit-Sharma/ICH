@@ -2,7 +2,7 @@ import React from "react";
 import {
   View,
   Text,
-  Pressable,
+  TouchableOpacity,
 } from "react-native";
 
 import styles from "./SectionTitleStyles";
@@ -22,11 +22,11 @@ const SectionTitle = ({
       </Text>
 
       {actionText ? (
-        <Pressable onPress={onPress}>
+        <TouchableOpacity onPress={onPress} accessibilityRole="button" accessibilityLabel={actionText}>
           <Text style={styles.action}>
             {actionText}
           </Text>
-        </Pressable>
+        </TouchableOpacity>
       ) : null}
 
     </View>

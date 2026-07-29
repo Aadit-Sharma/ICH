@@ -26,6 +26,8 @@ import {
   decreaseQuantity,
   increaseQuantity,
 } from '../../redux/slices/cartSlice';
+import {createOrder} from '../../redux/slices/ordersSlice';
+import {createBill} from '../../redux/slices/billsSlice';
 import styles from './CartStyles';
 
 // Individual Cart Item Card with Removal & Quantity Animations
@@ -111,6 +113,7 @@ const CartItemCard = ({item, onIncrease, onDecrease}) => {
 export default function Cart({navigation}) {
   const dispatch = useDispatch();
   const {cartItems, totalAmount} = useSelector(state => state.cart);
+  const nextOrderNumber = useSelector(state => state.orders.nextOrderNumber);
 
   // Bill Calculations via Redux state
   const subtotal = totalAmount || 0;
@@ -119,8 +122,27 @@ export default function Cart({navigation}) {
   const grandTotal = subtotal + gst + serviceCharge;
 
   const handleCheckout = () => {
+    const placedAt = new Date().toISOString();
+    dispatch(createOrder({
+      items: cartItems,
+      total: grandTotal,
+      placedAt,
+      subtotal,
+      tax: gst,
+      serviceCharge,
+    }));
+    const createdOrder = {
+      id: `ORD-${nextOrderNumber}`,
+      items: cartItems.map(({id, name, price, quantity}) => ({id, name, price, quantity})),
+      total: grandTotal,
+      placedAt,
+      subtotal,
+      tax: gst,
+      serviceCharge,
+    };
+    dispatch(createBill({order: createdOrder}));
     dispatch(clearCart());
-    navigation.navigate(Routes.SUCCESS);
+    navigation.navigate(Routes.SUCCESS, {placedAt});
   };
 
   const handleClearCart = () => {

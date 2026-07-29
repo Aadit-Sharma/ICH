@@ -1,24 +1,18 @@
 import React, {useEffect, useRef} from 'react';
 import {Animated, Pressable, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useDispatch} from 'react-redux';
+import {useSelector} from 'react-redux';
 import Routes from '../../navigation/Routes';
-import {clearCart} from '../../redux/slices/cartSlice';
-
-const createOrderId = () =>
-  `ICH-${Date.now().toString().slice(-6)}-${Math.floor(100 + Math.random() * 900)}`;
 
 export default function Success({navigation}) {
-  const dispatch = useDispatch();
-  const orderId = useRef(createOrderId()).current;
-  const orderedAt = useRef(new Date()).current;
+  const order = useSelector(state => state.orders.latestOrder);
+  const orderedAt = order ? new Date(order.placedAt) : new Date();
   const checkScale = useRef(new Animated.Value(0.7)).current;
   const checkOpacity = useRef(new Animated.Value(0)).current;
   const contentOpacity = useRef(new Animated.Value(0)).current;
   const contentTranslate = useRef(new Animated.Value(16)).current;
 
   useEffect(() => {
-    dispatch(clearCart());
     Animated.parallel([
       Animated.timing(checkOpacity, {
         toValue: 1,
@@ -44,7 +38,7 @@ export default function Success({navigation}) {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [checkOpacity, checkScale, contentOpacity, contentTranslate, dispatch]);
+  }, [checkOpacity, checkScale, contentOpacity, contentTranslate]);
 
   const goHome = () => navigation.reset({index: 0, routes: [{name: Routes.HOME}]});
 
@@ -79,7 +73,7 @@ export default function Success({navigation}) {
           <View style={styles.detailsCard}>
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Order ID</Text>
-              <Text style={styles.orderId}>{orderId}</Text>
+              <Text style={styles.orderId}>{order?.id || 'Order confirmed'}</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.detailRow}>
@@ -104,7 +98,10 @@ export default function Success({navigation}) {
           <Pressable onPress={goHome} style={styles.primaryButton} accessibilityRole="button">
             <Text style={styles.primaryButtonText}>Back to Home</Text>
           </Pressable>
-          <Pressable onPress={goHome} style={styles.secondaryButton} accessibilityRole="button">
+          <Pressable
+            onPress={() => navigation.reset({index: 0, routes: [{name: Routes.HOME, params: {screen: 'Orders'}}]})}
+            style={styles.secondaryButton}
+            accessibilityRole="button">
             <Text style={styles.secondaryButtonText}>View My Orders</Text>
           </Pressable>
         </Animated.View>
