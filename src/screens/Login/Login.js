@@ -1,4 +1,3 @@
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, {useRef, useState} from 'react';
 import {
@@ -16,28 +15,25 @@ import {
 import {loginUser} from '../../services/authService';
 import Routes from '../../navigation/Routes';
 import styles from './LoginStyles';
-const employeeMap = {
-  574839: 'emilys',
-};
+
 
 export default function Login({navigation}) {
   const buttonScale = useRef(new Animated.Value(1)).current;
   const screenOpacity = useRef(new Animated.Value(1)).current;
 
-  const [employeeId, setEmployeeId] = useState('');
+  const [username, setUserName] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleEmployeeIdChange = value => {
-    const numericValue = value.replace(/\D/g, '').slice(0, 6);
-    setEmployeeId(numericValue);
+  const handleUsernameChange = value => {
+    setUserName(value);
 
-    if (errors.employeeId) {
+    if (errors.username) {
       setErrors(current => ({
         ...current,
-        employeeId: undefined,
+        username: undefined,
       }));
     }
   };
@@ -56,14 +52,11 @@ export default function Login({navigation}) {
   const validateForm = () => {
     const validationErrors = {};
 
-    if (!employeeId) {
-      validationErrors.employeeId = 'Employee ID is required';
-    } else if (employeeId.length !== 6) {
-      validationErrors.employeeId =
-        'Employee ID must be exactly 6 digits';
-    }
+    if (!username.trim()) {
+      validationErrors.username = 'Username is required';
+    } 
 
-    if (!password) {
+    if (!password.trim()) {
       validationErrors.password = 'Password is required';
     }
 
@@ -91,39 +84,29 @@ export default function Login({navigation}) {
   try {
     setIsLoading(true);
 
-    // Convert Employee ID to DummyJSON username
-    const username = employeeMap[employeeId];
-
-    if (!username) {
-      Alert.alert(
-        'Login Failed',
-        'Employee ID is not registered.',
-      );
-      return;
-    }
-
-    // Call DummyJSON Login API
-    const result = await loginUser(username, password);
+    const result = await loginUser(
+      username.trim(),
+      password.trim(),
+    );
 
     if (result.success) {
       shouldResetLoading = false;
 
-      // Save login state
-      await AsyncStorage.setItem('isLoggedIn', 'true');
+      await AsyncStorage.setItem(
+        'isLoggedIn',
+        'true',
+      );
 
-      // Save access token
       await AsyncStorage.setItem(
         'accessToken',
         result.data.accessToken,
       );
 
-      // (Optional) Save user details
       await AsyncStorage.setItem(
         'user',
         JSON.stringify(result.data),
       );
 
-      // Fade animation
       Animated.timing(screenOpacity, {
         toValue: 0,
         duration: 260,
@@ -139,20 +122,21 @@ export default function Login({navigation}) {
 
     Alert.alert(
       'Login Failed',
-      result.data.message || 'Invalid Employee ID or Password',
+      result.data.message || 'Invalid Username or Password',
     );
   } catch (error) {
+    console.log(error);
+
     Alert.alert(
       'Login Failed',
       'Something went wrong. Please try again.',
     );
-    console.log(error);
   } finally {
     if (shouldResetLoading) {
       setIsLoading(false);
     }
   }
-};
+}; 
   return (
     <Animated.View
       style={[
@@ -182,28 +166,28 @@ export default function Login({navigation}) {
           <View style={styles.form}>
             <View style={styles.fieldGroup}>
               <Text style={styles.label}>
-                Employee ID
+                Username
               </Text>
 
               <TextInput
-                value={employeeId}
-                onChangeText={handleEmployeeIdChange}
-                placeholder="Employee ID"
+                value={username}
+                onChangeText={handleUsernameChange}
+                placeholder="Enter Username"
                 placeholderTextColor="#8A98A8"
-                keyboardType="number-pad"
-                maxLength={6}
+                autoCapitalize="none"
+                autoCorrect={false}
                 editable={!isLoading}
                 style={[
                   styles.input,
-                  errors.employeeId
+                  errors.username
                     ? styles.inputError
                     : null,
                 ]}
               />
 
-              {errors.employeeId ? (
+              {errors.username ? (
                 <Text style={styles.errorText}>
-                  {errors.employeeId}
+                  {errors.username}
                 </Text>
               ) : null}
             </View>

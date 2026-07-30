@@ -1,7 +1,7 @@
-
 import React, {useEffect, useRef, useState} from 'react';
 import {Animated, FlatList, ScrollView, View} from 'react-native';
 import {useSelector} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import styles from './HomeStyles';
 
@@ -21,19 +21,44 @@ import Routes from '../../navigation/Routes';
 import CategoryCard from '../../components/CategoryCard';
 import categories from '../../data/categories';
 
-const HOME_CATEGORY_NAMES = ['Breakfast', 'Lunch', 'Snacks', 'Beverages', 'Desserts'];
+const HOME_CATEGORY_NAMES = [
+  'Breakfast',
+  'Lunch',
+  'Snacks',
+  'Beverages',
+  'Desserts',
+];
 
 export default function Home({navigation}) {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [user, setUser] = useState(null);
+
   const cartCount = useSelector(state => state.cart.totalItems);
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
   const searchTranslateY = useRef(new Animated.Value(-18)).current;
   const bannerOpacity = useRef(new Animated.Value(0)).current;
+
   const categoryAnimations = useRef(
     HOME_CATEGORY_NAMES.map(() => new Animated.Value(0)),
   ).current;
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const savedUser = await AsyncStorage.getItem('user');
+
+        if (savedUser) {
+          setUser(JSON.parse(savedUser));
+        }
+      } catch (error) {
+        console.log('Error loading user:', error);
+      }
+    };
+
+    loadUser();
+  }, []);
 
   useEffect(() => {
     Animated.parallel([
@@ -42,18 +67,21 @@ export default function Home({navigation}) {
         duration: 420,
         useNativeDriver: true,
       }),
+
       Animated.spring(searchTranslateY, {
         toValue: 0,
         friction: 8,
         tension: 70,
         useNativeDriver: true,
       }),
+
       Animated.timing(bannerOpacity, {
         toValue: 1,
         duration: 420,
         delay: 120,
         useNativeDriver: true,
       }),
+
       Animated.stagger(
         75,
         categoryAnimations.map(animation =>
@@ -66,7 +94,12 @@ export default function Home({navigation}) {
         ),
       ),
     ]).start();
-  }, [bannerOpacity, categoryAnimations, screenOpacity, searchTranslateY]);
+  }, [
+    bannerOpacity,
+    categoryAnimations,
+    screenOpacity,
+    searchTranslateY,
+  ]);
 
   const handleCartPress = () => {
     navigation.navigate(Routes.CART);
@@ -79,13 +112,16 @@ export default function Home({navigation}) {
   };
 
   const hour = new Date().getHours();
-  const greeting = hour >= 5 && hour < 12
-    ? 'Good Morning'
-    : hour >= 12 && hour < 17
+
+  const greeting =
+    hour >= 5 && hour < 12
+      ? 'Good Morning'
+      : hour >= 12 && hour < 17
       ? 'Good Afternoon'
       : hour >= 17 && hour < 21
-        ? 'Good Evening'
-        : 'Good Night';
+      ? 'Good Evening'
+      : 'Good Night';
+
   const homeCategories = categories.filter(category =>
     HOME_CATEGORY_NAMES.includes(category.name),
   );
@@ -95,17 +131,28 @@ export default function Home({navigation}) {
     navigation.navigate(Routes.MENU, {category});
   };
 
-  const handleViewAll = () => navigation.navigate(Routes.MENU, {mode: 'all-categories'});
+  const handleViewAll = () =>
+    navigation.navigate(Routes.MENU, {
+      mode: 'all-categories',
+    });
 
-  const handleSeeMore = () => navigation.navigate(Routes.MENU, {category: 'All'});
+  const handleSeeMore = () =>
+    navigation.navigate(Routes.MENU, {
+      category: 'All',
+    });
 
   return (
     <Animated.View
-      style={[styles.mainContainer, {opacity: screenOpacity}]}>
+      style={[
+        styles.mainContainer,
+        {
+          opacity: screenOpacity,
+        },
+      ]}>
       <ScreenContainer style={styles.safeAreaContainer}>
         <AppHeader
           greeting={greeting}
-          username="Anushi"
+          username={user?.firstName || 'User'}
           subtitle="Indian Coffee House"
           cartCount={cartCount}
           onCartPress={handleCartPress}
@@ -114,7 +161,13 @@ export default function Home({navigation}) {
         <Animated.View
           style={[
             styles.searchSection,
-            {transform: [{translateY: searchTranslateY}]},
+            {
+              transform: [
+                {
+                  translateY: searchTranslateY,
+                },
+              ],
+            },
           ]}>
           <SearchBar
             value={searchText}
@@ -128,7 +181,13 @@ export default function Home({navigation}) {
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.container}>
-          <Animated.View style={[styles.offerSection, {opacity: bannerOpacity}]}>
+          <Animated.View
+            style={[
+              styles.offerSection,
+              {
+                opacity: bannerOpacity,
+              },
+            ]}>
             <OfferBanner />
           </Animated.View>
 
@@ -138,6 +197,7 @@ export default function Home({navigation}) {
               actionText="View All"
               onPress={handleViewAll}
             />
+
             <FlatList
               horizontal
               bounces
@@ -155,33 +215,33 @@ export default function Home({navigation}) {
 
                 return (
                   <Animated.View
-                  style={[
-                    styles.categoryAnimation,
-                    {
-                      opacity: categoryAnimation,
-                      transform: [
-                        {
-                          translateY: categoryAnimation.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [18, 0],
-                          }),
-                        },
-                        {
-                          scale: categoryAnimation.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: [0.94, 1],
-                          }),
-                        },
-                      ],
-                    },
-                  ]}>
-                  <CategoryCard
-                    category={item}
-                    selected={item.name === selectedCategory}
-                    containerStyle={styles.categoryCardSpacing}
-                    cardStyle={styles.categoryCard}
-                    onPress={handleCategoryPress}
-                  />
+                    style={[
+                      styles.categoryAnimation,
+                      {
+                        opacity: categoryAnimation,
+                        transform: [
+                          {
+                            translateY: categoryAnimation.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [18, 0],
+                            }),
+                          },
+                          {
+                            scale: categoryAnimation.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0.94, 1],
+                            }),
+                          },
+                        ],
+                      },
+                    ]}>
+                    <CategoryCard
+                      category={item}
+                      selected={item.name === selectedCategory}
+                      containerStyle={styles.categoryCardSpacing}
+                      cardStyle={styles.categoryCard}
+                      onPress={handleCategoryPress}
+                    />
                   </Animated.View>
                 );
               }}
@@ -194,6 +254,7 @@ export default function Home({navigation}) {
               actionText="See More"
               onPress={handleSeeMore}
             />
+
             <RecommendedSection
               navigation={navigation}
               searchText={searchText}
