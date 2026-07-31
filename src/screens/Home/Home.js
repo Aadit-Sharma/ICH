@@ -33,7 +33,8 @@ export default function Home({navigation}) {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [user, setUser] = useState(null);
-
+  const scrollViewRef = useRef(null); 
+  const [recommendedY, setRecommendedY] = useState(0);
   const cartCount = useSelector(state => state.cart.totalItems);
 
   const screenOpacity = useRef(new Animated.Value(0)).current;
@@ -178,6 +179,7 @@ export default function Home({navigation}) {
         </Animated.View>
 
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.container}>
@@ -188,7 +190,15 @@ export default function Home({navigation}) {
                 opacity: bannerOpacity,
               },
             ]}>
-            <OfferBanner />
+            <OfferBanner
+              onOrderNow={() => {
+                scrollViewRef.current?.scrollTo({
+                  y: recommendedY - 20,
+                  animated: true,
+                });
+              }}
+            />
+           
           </Animated.View>
 
           <View style={styles.categoriesSection}>
@@ -248,7 +258,11 @@ export default function Home({navigation}) {
             />
           </View>
 
-          <View style={styles.recommendedSection}>
+          <View 
+            style={styles.recommendedSection}
+            onLayout={event => {
+            setRecommendedY(event.nativeEvent.layout.y);
+          }}>
             <SectionTitle
               title="Recommended For You"
               actionText="See More"

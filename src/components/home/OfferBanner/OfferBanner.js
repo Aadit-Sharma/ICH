@@ -8,7 +8,7 @@ Pressable
 
 import styles from "./OfferBannerStyles";
 
-const OfferBanner=()=>{
+const OfferBanner = ({onOrderNow}) => {
 
 return(
 
@@ -21,8 +21,12 @@ Today's Special
 <Text style={styles.subtitle}>
 20% OFF on Lunch Combo
 </Text>
-
-<Pressable style={styles.button}>
+<Pressable
+  style={styles.button}
+  onPress={() => {
+    console.log("Order Now Pressed");
+    onOrderNow && onOrderNow();
+  }}>
 
 <Text style={styles.buttonText}>
 Order Now
