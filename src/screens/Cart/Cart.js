@@ -20,6 +20,7 @@ import {
   View,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Routes from '../../navigation/Routes';
 import {
   clearCart,
@@ -113,7 +114,9 @@ const CartItemCard = ({item, onIncrease, onDecrease}) => {
 export default function Cart({navigation}) {
   const dispatch = useDispatch();
   const {cartItems, totalAmount} = useSelector(state => state.cart);
-  const nextOrderNumber = useSelector(state => state.orders.nextOrderNumber);
+  const nextOrderNumberByUser = useSelector(
+    state => state.orders.nextOrderNumberByUser,
+  );
 
   // Bill Calculations via Redux state
   const subtotal = totalAmount || 0;
@@ -121,7 +124,26 @@ export default function Cart({navigation}) {
   const serviceCharge = subtotal > 0 ? 15 : 0; // ₹15 Packaging & Service Fee
   const grandTotal = subtotal + gst + serviceCharge;
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
+    let userId = null;
+    let username = null;
+    try {
+      const savedUser = await AsyncStorage.getItem('user');
+      if (savedUser) {
+        const userObj = JSON.parse(savedUser);
+        userId = userObj.id;
+        username = userObj.username;
+      }
+    } catch (error) {
+      console.log('Error reading user session in checkout:', error);
+    }
+
+    if (userId == null || username == null) {
+      return;
+    }
+
+    const nextOrderNumber =
+      nextOrderNumberByUser[String(userId)] || 1001;
     const placedAt = new Date().toISOString();
     dispatch(createOrder({
       items: cartItems,
@@ -130,6 +152,8 @@ export default function Cart({navigation}) {
       subtotal,
       tax: gst,
       serviceCharge,
+      userId,
+      username,
     }));
     const createdOrder = {
       id: `ORD-${nextOrderNumber}`,
@@ -139,6 +163,8 @@ export default function Cart({navigation}) {
       subtotal,
       tax: gst,
       serviceCharge,
+      userId,
+      username,
     };
     dispatch(createBill({order: createdOrder}));
     dispatch(clearCart());

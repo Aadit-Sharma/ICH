@@ -1,15 +1,21 @@
 import {createSlice} from '@reduxjs/toolkit';
 import employeeProfile from '../../data/employeeProfile';
 
-const initialState = {name: employeeProfile.name, phone: employeeProfile.phone};
+const initialState = {
+  name: employeeProfile.name,
+  email: employeeProfile.email,
+  gender: '',
+  age: '',
+  birthDate: '',
+  phone: employeeProfile.phone,
+};
 
 const profileSlice = createSlice({
   name: 'profile',
   initialState,
   reducers: {
     updateProfile: (state, action) => {
-      state.name = action.payload.name;
-      state.phone = action.payload.phone;
+      Object.assign(state, action.payload);
     },
   },
 });

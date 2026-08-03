@@ -1,13 +1,40 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert, Image, Platform, Pressable, ScrollView, StatusBar, Text, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useIsFocused} from '@react-navigation/native';
 import {exportDocumentPdf} from '../../utils/pdfExport';
 import styles from './OrdersStyles';
 
 export default function Orders({navigation}) {
   const insets = useSafeAreaInsets();
-  const orders = useSelector(state => state.orders.orders);
+  const isFocused = useIsFocused();
+  const ordersByUser = useSelector(state => state.orders.ordersByUser);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    if (isFocused) {
+      const loadUser = async () => {
+        try {
+          const savedUser = await AsyncStorage.getItem('user');
+          if (savedUser) {
+            setCurrentUser(JSON.parse(savedUser));
+          } else {
+            setCurrentUser(null);
+          }
+        } catch (error) {
+          console.log('Error loading user session in Orders:', error);
+        }
+      };
+      loadUser();
+    }
+  }, [isFocused]);
+
+  const orders = currentUser?.id == null
+    ? []
+    : ordersByUser[String(currentUser.id)] || [];
+
   const [selectedId, setSelectedId] = useState(null);
   const selectedOrder = orders.find(order => order.id === selectedId) || orders[0];
   const topPadding = (Platform.OS === 'android' ? StatusBar.currentHeight || insets.top : insets.top) + 12;

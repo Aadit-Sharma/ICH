@@ -1,8 +1,8 @@
 import {createSlice} from '@reduxjs/toolkit';
 
 const initialState = {
-  bills: [],
-  nextBillNumber: 1001,
+  billsByUser: {},
+  nextBillNumberByUser: {},
   latestBill: null,
 };
 
@@ -12,8 +12,15 @@ const billsSlice = createSlice({
   reducers: {
     createBill: (state, action) => {
       const {order} = action.payload;
+
+      if (!order || order.userId == null || order.username == null) {
+        return;
+      }
+
+      const userKey = String(order.userId);
+      const nextBillNumber = state.nextBillNumberByUser[userKey] || 1001;
       const bill = {
-        id: `BILL-${state.nextBillNumber}`,
+        id: `BILL-${nextBillNumber}`,
         orderId: order.id,
         placedAt: order.placedAt,
         items: order.items,
@@ -22,11 +29,17 @@ const billsSlice = createSlice({
         tax: order.tax,
         serviceCharge: order.serviceCharge,
         paymentStatus: 'Paid',
+        userId: order.userId,
+        username: order.username,
       };
 
-      state.bills.unshift(bill);
+      if (!state.billsByUser[userKey]) {
+        state.billsByUser[userKey] = [];
+      }
+
+      state.billsByUser[userKey].unshift(bill);
       state.latestBill = bill;
-      state.nextBillNumber += 1;
+      state.nextBillNumberByUser[userKey] = nextBillNumber + 1;
     },
     resetBills: () => ({...initialState}),
   },

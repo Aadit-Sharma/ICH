@@ -1,8 +1,8 @@
 import {createSlice} from '@reduxjs/toolkit';
 
 const initialState = {
-  orders: [],
-  nextOrderNumber: 1001,
+  ordersByUser: {},
+  nextOrderNumberByUser: {},
   latestOrder: null,
 };
 
@@ -11,9 +11,16 @@ const ordersSlice = createSlice({
   initialState,
   reducers: {
     createOrder: (state, action) => {
-      const {items, total, placedAt, subtotal, tax, serviceCharge} = action.payload;
+      const {items, total, placedAt, subtotal, tax, serviceCharge, userId, username} = action.payload;
+
+      if (userId == null || username == null) {
+        return;
+      }
+
+      const userKey = String(userId);
+      const nextOrderNumber = state.nextOrderNumberByUser[userKey] || 1001;
       const order = {
-        id: `ORD-${state.nextOrderNumber}`,
+        id: `ORD-${nextOrderNumber}`,
         placedAt,
         items: items.map(({id, name, price, quantity}) => ({id, name, price, quantity})),
         total,
@@ -21,11 +28,17 @@ const ordersSlice = createSlice({
         tax,
         serviceCharge,
         status: 'Preparing',
+        userId,
+        username,
       };
 
-      state.orders.unshift(order);
+      if (!state.ordersByUser[userKey]) {
+        state.ordersByUser[userKey] = [];
+      }
+
+      state.ordersByUser[userKey].unshift(order);
       state.latestOrder = order;
-      state.nextOrderNumber += 1;
+      state.nextOrderNumberByUser[userKey] = nextOrderNumber + 1;
     },
     resetOrders: () => ({...initialState}),
   },

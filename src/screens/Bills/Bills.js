@@ -1,13 +1,40 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Alert, Image, Platform, Pressable, ScrollView, StatusBar, Text, View} from 'react-native';
 import {useSelector} from 'react-redux';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useIsFocused} from '@react-navigation/native';
 import {exportDocumentPdf} from '../../utils/pdfExport';
 import styles from './BillsStyles';
 
 export default function Bills({navigation}) {
   const insets = useSafeAreaInsets();
-  const bills = useSelector(state => state.bills.bills);
+  const isFocused = useIsFocused();
+  const billsByUser = useSelector(state => state.bills.billsByUser);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    if (isFocused) {
+      const loadUser = async () => {
+        try {
+          const savedUser = await AsyncStorage.getItem('user');
+          if (savedUser) {
+            setCurrentUser(JSON.parse(savedUser));
+          } else {
+            setCurrentUser(null);
+          }
+        } catch (error) {
+          console.log('Error loading user session in Bills:', error);
+        }
+      };
+      loadUser();
+    }
+  }, [isFocused]);
+
+  const bills = currentUser?.id == null
+    ? []
+    : billsByUser[String(currentUser.id)] || [];
+
   const [selectedId, setSelectedId] = useState(null);
   const selectedBill = bills.find(bill => bill.id === selectedId) || bills[0];
   const topPadding = (Platform.OS === 'android' ? StatusBar.currentHeight || insets.top : insets.top) + 12;

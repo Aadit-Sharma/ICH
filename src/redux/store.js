@@ -9,6 +9,7 @@ import {
   PURGE,
   REGISTER,
   REHYDRATE,
+  createMigrate,
   createTransform,
 } from 'redux-persist';
 import {clearCart} from './slices/cartSlice';
@@ -47,12 +48,78 @@ const removeTransientCheckoutState = createTransform(
   {whitelist: ['orders', 'bills']},
 );
 
+const migrateHistoryByUser = (history, legacyRecordsKey, recordsKey, counterKey) => {
+  if (!history || history[recordsKey]) {
+    return history;
+  }
+
+  const recordsByUser = {};
+  const nextNumberByUser = {};
+
+  (history[legacyRecordsKey] || []).forEach(record => {
+    if (!record || record.userId == null || record.username == null) {
+      return;
+    }
+
+    const userKey = String(record.userId);
+    if (!recordsByUser[userKey]) {
+      recordsByUser[userKey] = [];
+      nextNumberByUser[userKey] = 1001;
+    }
+
+    recordsByUser[userKey].push(record);
+    const recordNumber = Number(String(record.id).replace(/\D/g, ''));
+    if (Number.isFinite(recordNumber)) {
+      nextNumberByUser[userKey] = Math.max(
+        nextNumberByUser[userKey],
+        recordNumber + 1,
+      );
+    }
+  });
+
+  const migratedHistory = {...history};
+  delete migratedHistory[legacyRecordsKey];
+  delete migratedHistory.nextOrderNumber;
+  delete migratedHistory.nextBillNumber;
+
+  return {
+    ...migratedHistory,
+    [recordsKey]: recordsByUser,
+    [counterKey]: nextNumberByUser,
+  };
+};
+
+const migrations = {
+  2: state => {
+    if (!state) {
+      return state;
+    }
+
+    return {
+      ...state,
+      orders: migrateHistoryByUser(
+        state.orders,
+        'orders',
+        'ordersByUser',
+        'nextOrderNumberByUser',
+      ),
+      bills: migrateHistoryByUser(
+        state.bills,
+        'bills',
+        'billsByUser',
+        'nextBillNumberByUser',
+      ),
+    };
+  },
+};
+
 const persistConfig = {
   key: 'ich',
-  version: 1,
+  version: 2,
   storage: AsyncStorage,
   whitelist: ['cart', 'orders', 'bills', 'profile'],
   transforms: [removeTransientCheckoutState],
+  migrate: createMigrate(migrations, {debug: false}),
 };
 
 export const store = configureStore({
@@ -71,5 +138,8 @@ export const persistor = persistStore(store);
 // order and bill history available after a subsequent sign-in.
 export const clearApplicationData = async () => {
   store.dispatch(clearCart());
+  await AsyncStorage.removeItem('isLoggedIn');
+  await AsyncStorage.removeItem('accessToken');
+  await AsyncStorage.removeItem('user');
   await persistor.flush();
 };
