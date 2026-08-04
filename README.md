@@ -6,34 +6,34 @@ Designed with reusable components, Redux state management, and clean architectur
 
 ---
 
-## Features
+##  Features
 
-### Authentication
+###  Authentication
 - Secure login using DummyJSON API
-- Persistent login using AsyncStorage
+- Persistent login with AsyncStorage
 - Logout with session clearing
 - User profile loading
 
-### Food Ordering
+###  Food Ordering
 - Browse menu categories
 - Search food items
 - View detailed food information
 - Add items to cart
 - Manage cart quantities
 
-### User Experience
-- Smooth animated Home Screen
-- Offer banner with animated scroll
-- Responsive UI
-- Bottom Navigation
-- Loading indicators
-- Session persistence
-
-### Orders & Bills
-- Order history
+###  Orders & Bills
+- View order history
 - Bill generation
-- User session management
-- Profile management
+- Session-based order management
+- User profile management
+
+###  User Experience
+- Smooth animated Home screen
+- Animated Offer Banner
+- Category navigation
+- Bottom Tab Navigation
+- Responsive UI
+- Loading indicators
 
 ---
 
@@ -52,35 +52,21 @@ Designed with reusable components, Redux state management, and clean architectur
 | ![](screenshots/cart.png) | ![](screenshots/orders.png) |
 
 | Bills | Profile |
-|-------|----------|
+|-------|---------|
 | ![](screenshots/bills.png) | ![](screenshots/profile.png) |
 
 ---
+## 🛠 Tech Stack
 
-## Tech Stack
-
-### Mobile
-- React Native CLI
-- JavaScript
-
-### Navigation
-- React Navigation
-
-### State Management
-- Redux Toolkit
-- React Redux
-
-### Storage
-- AsyncStorage
-
-### Authentication
-- DummyJSON API
-
-### UI
-- React Native
-- Custom Components
-- Animated API
-
+| Category | Technologies |
+|----------|--------------|
+| Mobile | React Native CLI |
+| Language | JavaScript |
+| Navigation | React Navigation |
+| State Management | Redux Toolkit, React Redux |
+| Storage | AsyncStorage |
+| Authentication | DummyJSON API |
+| UI | React Native Animated API, Custom Components |
 ---
 
 ## Architecture
@@ -166,6 +152,13 @@ npx react-native run-android
 - Responsive layouts
 - Animated UI interactions
 - Clean folder organization
+
+---
+##  Demo Login
+
+Username: emilys
+
+Password: emilyspass
 
 ---
 
