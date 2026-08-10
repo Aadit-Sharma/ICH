@@ -10,9 +10,23 @@ import {
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import type {PaymentMethod} from '../../types/payment';
 import {processPayment} from '../../services/paymentService';
-
+import {useDispatch} from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  createOrder,
+} from '../../redux/slices/ordersSlice';
+import {
+  createBill,
+} from '../../redux/slices/billsSlice';
+import {clearCart} from '../../redux/slices/cartSlice';
+import type {CartItem} from '../../types/cart';
+import {store} from '../../redux/store';
 type PaymentStackParamList = {
   Payment: {
+    cartItems: CartItem[];
+    subtotal: number;
+    tax: number;
+    serviceCharge: number;
     total: number;
   };
   Success: {
@@ -25,35 +39,76 @@ type PaymentProps = NativeStackScreenProps<
   'Payment'
 >;
 
-export default function Payment({navigation, route}: PaymentProps) {
-  const {total} = route.params;
 
+
+export default function Payment({navigation, route}: 
+PaymentProps) {
+  const {
+  cartItems,
+  subtotal,
+  tax,
+  serviceCharge,
+  total,
+} = route.params;
+	const dispatch = useDispatch();
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethod>('UPI');
 
   const [processing, setProcessing] = useState(false);
-
   const handlePayment = async () => {
-    setProcessing(true);
+  setProcessing(true);
 
-    try {
-      const payment = await processPayment({
-        orderId: `TEMP-${Date.now()}`,
-        amount: total,
-        method: selectedMethod,
-      });
+  try {
+    const payment = await processPayment({
+      orderId: `TEMP-${Date.now()}`,
+      amount: total,
+      method: selectedMethod,
+    });
 
-      if (payment.status === 'SUCCESS') {
-        navigation.navigate('Success', {
-          placedAt: payment.createdAt,
-        });
-      }
-    } finally {
-      setProcessing(false);
+    if (payment.status !== 'SUCCESS') {
+      return;
     }
-  };
 
-  return (
+    const savedUser = await AsyncStorage.getItem('user');
+
+    if (!savedUser) {
+      throw new Error('Logged-in user session not found.');
+    }
+
+    const user = JSON.parse(savedUser);
+
+    dispatch(
+  createOrder({
+    items: cartItems,
+    total,
+    placedAt: payment.createdAt,
+    subtotal,
+    tax,
+    serviceCharge,
+    userId: user.id,
+    username: user.username,
+  }),
+);
+
+const createdOrder = store.getState().orders.latestOrder;
+
+if (!createdOrder) {
+  throw new Error('Order creation failed.');
+}
+
+dispatch(createBill({order: createdOrder}));
+
+dispatch(clearCart());
+    navigation.navigate('Success', {
+      placedAt: payment.createdAt,
+    });
+  } catch (error) {
+    console.error('Payment processing failed:', error);
+  } finally {
+    setProcessing(false);
+  }
+};
+   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()}>

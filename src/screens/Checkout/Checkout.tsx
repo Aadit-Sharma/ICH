@@ -73,17 +73,22 @@ export default function Checkout({navigation}: any) {
           </View>
         </View>
 
-        <Pressable
+<Pressable
   onPress={() =>
     navigation.navigate('Payment', {
+      cartItems,
+      subtotal,
+      tax: gst,
+      serviceCharge,
       total: grandTotal,
     })
   }
-  style={styles.continueButton}>
-          <Text style={styles.continueButtonText}>
-            Continue to Payment
-          </Text>
-        </Pressable>
+  style={styles.continueButton}
+>
+  <Text style={styles.continueButtonText}>
+    Continue to Payment
+  </Text>
+</Pressable>
       </ScrollView>
     </SafeAreaView>
   );
