@@ -11,7 +11,17 @@ const ordersSlice = createSlice({
   initialState,
   reducers: {
     createOrder: (state, action) => {
-      const {items, total, placedAt, subtotal, tax, serviceCharge, userId, username} = action.payload;
+      const {
+  items,
+  total,
+  placedAt,
+  subtotal,
+  tax,
+  serviceCharge,
+  userId,
+  username,
+  address,
+} = action.payload;
 
       if (userId == null || username == null) {
         return;
@@ -20,17 +30,23 @@ const ordersSlice = createSlice({
       const userKey = String(userId);
       const nextOrderNumber = state.nextOrderNumberByUser[userKey] || 1001;
       const order = {
-        id: `ORD-${nextOrderNumber}`,
-        placedAt,
-        items: items.map(({id, name, price, quantity}) => ({id, name, price, quantity})),
-        total,
-        subtotal,
-        tax,
-        serviceCharge,
-        status: 'Preparing',
-        userId,
-        username,
-      };
+  id: `ORD-${nextOrderNumber}`,
+  placedAt,
+  items: items.map(({id, name, price, quantity}) => ({
+    id,
+    name,
+    price,
+    quantity,
+  })),
+  total,
+  subtotal,
+  tax,
+  serviceCharge,
+  status: 'Preparing',
+  userId,
+  username,
+  address,
+};
 
       if (!state.ordersByUser[userKey]) {
         state.ordersByUser[userKey] = [];

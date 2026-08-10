@@ -31,6 +31,7 @@ const billsSlice = createSlice({
         paymentStatus: 'Paid',
         userId: order.userId,
         username: order.username,
+        address: order.address,
       };
 
       if (!state.billsByUser[userKey]) {

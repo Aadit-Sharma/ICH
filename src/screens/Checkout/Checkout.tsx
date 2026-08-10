@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   Pressable,
   SafeAreaView,
@@ -6,14 +6,23 @@ import {
   StyleSheet,
   Text,
   View,
+  TextInput,
 } from 'react-native';
 import {useSelector} from 'react-redux';
-
+import type {DeliveryAddress} from '../../types/address';
 export default function Checkout({navigation}: any) {
   const {cartItems, totalAmount} = useSelector(
     (state: any) => state.cart,
   );
-
+  const [address, setAddress] = useState<DeliveryAddress>({
+  fullName: '',
+  phone: '',
+  addressLine1: '',
+  city: '',
+  state: '',
+  pincode: '',
+  landmark: '',
+});
   const subtotal = totalAmount || 0;
   const gst = Math.round(subtotal * 0.05);
   const serviceCharge = subtotal > 0 ? 15 : 0;
@@ -32,6 +41,78 @@ export default function Checkout({navigation}: any) {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.sectionTitle}>Delivery Address</Text>
+
+<View style={styles.addressCard}>
+  <TextInput
+    style={styles.input}
+    placeholder="Full Name"
+    value={address.fullName}
+    onChangeText={text =>
+      setAddress({...address, fullName: text})
+    }
+  />
+
+  <TextInput
+    style={styles.input}
+    placeholder="Phone Number"
+    value={address.phone}
+    keyboardType="phone-pad"
+    onChangeText={text =>
+      setAddress({...address, phone: text})
+    }
+  />
+
+  <TextInput
+    style={[styles.input, styles.multilineInput]}
+    placeholder="Address"
+    value={address.addressLine1}
+    multiline
+    onChangeText={text =>
+      setAddress({...address, addressLine1: text})
+    }
+  />
+
+  <View style={styles.inputRow}>
+    <TextInput
+      style={[styles.input, styles.halfInput]}
+      placeholder="City"
+      value={address.city}
+      onChangeText={text =>
+        setAddress({...address, city: text})
+      }
+    />
+
+    <TextInput
+      style={[styles.input, styles.halfInput]}
+      placeholder="State"
+      value={address.state}
+      onChangeText={text =>
+        setAddress({...address, state: text})
+      }
+    />
+  </View>
+
+  <TextInput
+    style={styles.input}
+    placeholder="Pincode"
+    value={address.pincode}
+    keyboardType="number-pad"
+    maxLength={6}
+    onChangeText={text =>
+      setAddress({...address, pincode: text})
+    }
+  />
+
+  <TextInput
+    style={styles.input}
+    placeholder="Landmark (Optional)"
+    value={address.landmark}
+    onChangeText={text =>
+      setAddress({...address, landmark: text})
+    }
+  />
+</View>
         <Text style={styles.sectionTitle}>Order Summary</Text>
 
         {cartItems.map((item: any) => (
@@ -76,12 +157,13 @@ export default function Checkout({navigation}: any) {
 <Pressable
   onPress={() =>
     navigation.navigate('Payment', {
-      cartItems,
-      subtotal,
-      tax: gst,
-      serviceCharge,
-      total: grandTotal,
-    })
+  cartItems,
+  subtotal,
+  tax: gst,
+  serviceCharge,
+  total: grandTotal,
+  address,
+})
   }
   style={styles.continueButton}
 >
@@ -213,4 +295,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
+addressCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  padding: 14,
+  marginBottom: 20,
+},
+
+input: {
+  height: 48,
+  borderWidth: 1,
+  borderColor: '#D9E2EC',
+  borderRadius: 10,
+  paddingHorizontal: 14,
+  marginBottom: 10,
+  color: '#102A43',
+  backgroundColor: '#FFFFFF',
+},
+
+multilineInput: {
+  height: 80,
+  paddingTop: 12,
+  textAlignVertical: 'top',
+},
+
+inputRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+},
+
+halfInput: {
+  width: '48%',
+},
 });
