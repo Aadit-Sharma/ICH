@@ -34,6 +34,8 @@ const Routes = {
   // Navigation route name for the Cart screen.
   CART: "Cart",
   // Navigation route name for the Success screen.
+  CHECKOUT: "Checkout",
+  PAYMENT: "Payment",
   SUCCESS: "Success",
 };
 

@@ -298,7 +298,7 @@ export default function Cart({navigation}) {
             </View>
 
             <Pressable
-              onPress={handleCheckout}
+              onPress={() => navigation.navigate(Routes.CHECKOUT)}
               style={({pressed}) => [
                 styles.checkoutButton,
                 pressed && {opacity: 0.88},

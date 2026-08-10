@@ -13,6 +13,8 @@ import MainTabs from './MainTabs';
 import Menu from '../screens/Menu';
 import FoodDetails from '../screens/FoodDetails';
 import Cart from '../screens/Cart';
+import Checkout from '../screens/Checkout/Checkout';
+import Payment from '../screens/Payment/Payment';
 import Success from '../screens/Success';
 
 import Routes from './Routes';
@@ -47,6 +49,11 @@ export default function StackNavigator() {
         />
         <Stack.Screen name={Routes.FOOD_DETAILS} component={FoodDetails} />
         <Stack.Screen name={Routes.CART} component={Cart} />
+        <Stack.Screen name={Routes.CHECKOUT}  component={Checkout}/>
+        <Stack.Screen
+  name={Routes.PAYMENT}
+  component={Payment}
+/>
         <Stack.Screen name={Routes.SUCCESS} component={Success} />
       </Stack.Navigator>
     </NavigationContainer>
