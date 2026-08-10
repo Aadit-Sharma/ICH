@@ -20,15 +20,17 @@ import {
 } from '../../redux/slices/billsSlice';
 import {clearCart} from '../../redux/slices/cartSlice';
 import type {CartItem} from '../../types/cart';
+import type {DeliveryAddress} from '../../types/address';
 import {store} from '../../redux/store';
 type PaymentStackParamList = {
   Payment: {
-    cartItems: CartItem[];
-    subtotal: number;
-    tax: number;
-    serviceCharge: number;
-    total: number;
-  };
+  cartItems: CartItem[];
+  subtotal: number;
+  tax: number;
+  serviceCharge: number;
+  total: number;
+  address: DeliveryAddress;
+};
   Success: {
     placedAt: string;
   };
@@ -49,14 +51,17 @@ PaymentProps) {
   tax,
   serviceCharge,
   total,
+  address,
 } = route.params;
 	const dispatch = useDispatch();
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethod>('UPI');
 
   const [processing, setProcessing] = useState(false);
+const [paymentError, setPaymentError] = useState('');
   const handlePayment = async () => {
   setProcessing(true);
+ setPaymentError('');
 
   try {
     const payment = await processPayment({
@@ -65,9 +70,19 @@ PaymentProps) {
       method: selectedMethod,
     });
 
-    if (payment.status !== 'SUCCESS') {
-      return;
-    }
+    if (payment.status === 'FAILED') {
+  setPaymentError(
+    'Your payment could not be completed. Please try again.',
+  );
+  return;
+}
+
+if (payment.status !== 'SUCCESS') {
+  setPaymentError(
+    'Payment could not be completed. Please try again.',
+  );
+  return;
+}
 
     const savedUser = await AsyncStorage.getItem('user');
 
@@ -87,6 +102,7 @@ PaymentProps) {
     serviceCharge,
     userId: user.id,
     username: user.username,
+    address,
   }),
 );
 
@@ -202,26 +218,58 @@ dispatch(clearCart());
           <Text style={styles.totalValue}>₹{total}</Text>
         </View>
 
-        <Pressable
-          onPress={handlePayment}
-          disabled={processing}
-          style={[
-            styles.payButton,
-            processing && styles.disabledButton,
-          ]}>
-          {processing ? (
-            <View style={styles.processingRow}>
-              <ActivityIndicator color="#FFFFFF" />
-              <Text style={styles.payButtonText}>
-                Processing...
-              </Text>
-            </View>
-          ) : (
-            <Text style={styles.payButtonText}>
-              Pay ₹{total}
-            </Text>
-          )}
-        </Pressable>
+       {paymentError ? (
+  <View style={styles.failureCard}>
+    <Text style={styles.failureIcon}>!</Text>
+
+    <Text style={styles.failureTitle}>
+      Payment Failed
+    </Text>
+
+    <Text style={styles.failureMessage}>
+      {paymentError}
+    </Text>
+
+    <Pressable
+      onPress={handlePayment}
+      disabled={processing}
+      style={styles.retryButton}>
+      <Text style={styles.retryButtonText}>
+        Try Again
+      </Text>
+    </Pressable>
+
+    <Pressable
+      onPress={() => navigation.goBack()}
+      disabled={processing}
+      style={styles.backToCheckoutButton}>
+      <Text style={styles.backToCheckoutText}>
+        Back to Checkout
+      </Text>
+    </Pressable>
+  </View>
+) : (
+  <Pressable
+    onPress={handlePayment}
+    disabled={processing}
+    style={[
+      styles.payButton,
+      processing && styles.disabledButton,
+    ]}>
+    {processing ? (
+      <View style={styles.processingRow}>
+        <ActivityIndicator color="#FFFFFF" />
+        <Text style={styles.payButtonText}>
+          Processing...
+        </Text>
+      </View>
+    ) : (
+      <Text style={styles.payButtonText}>
+        Pay ₹{total}
+      </Text>
+    )}
+  </Pressable>
+)} 
       </View>
     </SafeAreaView>
   );
@@ -349,4 +397,71 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+failureCard: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  padding: 20,
+  marginTop: 22,
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#F5C2C7',
+},
+
+failureIcon: {
+  width: 42,
+  height: 42,
+  borderRadius: 21,
+  backgroundColor: '#FDECEC',
+  color: '#D32F2F',
+  fontSize: 25,
+  fontWeight: '900',
+  textAlign: 'center',
+  lineHeight: 42,
+  marginBottom: 10,
+},
+
+failureTitle: {
+  fontSize: 18,
+  fontWeight: '800',
+  color: '#102A43',
+},
+
+failureMessage: {
+  fontSize: 13,
+  color: '#627D98',
+  textAlign: 'center',
+  lineHeight: 19,
+  marginTop: 6,
+},
+
+retryButton: {
+  width: '100%',
+  backgroundColor: '#F9A826',
+  borderRadius: 12,
+  paddingVertical: 14,
+  alignItems: 'center',
+  marginTop: 18,
+},
+
+retryButtonText: {
+  color: '#FFFFFF',
+  fontSize: 15,
+  fontWeight: '800',
+},
+
+backToCheckoutButton: {
+  width: '100%',
+  borderWidth: 1,
+  borderColor: '#005BAC',
+  borderRadius: 12,
+  paddingVertical: 13,
+  alignItems: 'center',
+  marginTop: 10,
+},
+
+backToCheckoutText: {
+  color: '#005BAC',
+  fontSize: 15,
+  fontWeight: '800',
+},
 });
