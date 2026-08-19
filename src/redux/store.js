@@ -17,12 +17,13 @@ import cartReducer from './slices/cartSlice';
 import ordersReducer from './slices/ordersSlice';
 import billsReducer from './slices/billsSlice';
 import profileReducer from './slices/profileSlice';
-
+import addressReducer from './slices/addressSlice';
 const rootReducer = combineReducers({
   cart: cartReducer,
   orders: ordersReducer,
   bills: billsReducer,
   profile: profileReducer,
+  addresses:addressReducer,
 });
 
 // Checkout feedback is session-only. Durable records and cart contents persist.
@@ -117,7 +118,13 @@ const persistConfig = {
   key: 'ich',
   version: 2,
   storage: AsyncStorage,
-  whitelist: ['cart', 'orders', 'bills', 'profile'],
+  whitelist: [
+  'cart',
+  'orders',
+  'bills',
+  'profile',
+  'addresses',
+],
   transforms: [removeTransientCheckoutState],
   migrate: createMigrate(migrations, {debug: false}),
 };

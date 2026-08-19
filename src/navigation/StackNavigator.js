@@ -16,7 +16,9 @@ import Cart from '../screens/Cart';
 import Checkout from '../screens/Checkout/Checkout';
 import Payment from '../screens/Payment/Payment';
 import Success from '../screens/Success';
-
+import OrderDetails from '../screens/OrderDetails/OrderDetails';
+import OrderTracking from '../screens/OrderTracking/OrderTracking';
+import AddressBook from '../screens/AddressBook/AddressBook';
 import Routes from './Routes';
 
 
@@ -51,10 +53,22 @@ export default function StackNavigator() {
         <Stack.Screen name={Routes.CART} component={Cart} />
         <Stack.Screen name={Routes.CHECKOUT}  component={Checkout}/>
         <Stack.Screen
-  name={Routes.PAYMENT}
-  component={Payment}
-/>
+          name={Routes.PAYMENT}
+          component={Payment}
+        />
         <Stack.Screen name={Routes.SUCCESS} component={Success} />
+      <Stack.Screen
+        name={Routes.ORDER_DETAILS}
+        component={OrderDetails}
+      />
+      <Stack.Screen
+        name={Routes.ORDER_TRACKING}
+        component={OrderTracking}
+      />
+      <Stack.Screen
+        name={Routes.ADDRESS_BOOK}
+        component={AddressBook}
+      />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -28,10 +28,12 @@ const billsSlice = createSlice({
         subtotal: order.subtotal,
         tax: order.tax,
         serviceCharge: order.serviceCharge,
-        paymentStatus: 'Paid',
-        userId: order.userId,
-        username: order.username,
-        address: order.address,
+        paymentStatus: order.paymentStatus || 'Paid',
+paymentId: order.paymentId,
+paymentMethod: order.paymentMethod,
+userId: order.userId,
+username: order.username,
+address: order.address,
       };
 
       if (!state.billsByUser[userKey]) {

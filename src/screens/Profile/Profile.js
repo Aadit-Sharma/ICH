@@ -387,7 +387,21 @@ return (
           resizeMode="contain"
         />
       </TouchableOpacity>
+      <TouchableOpacity
+ onPress={() =>
+  navigation.getParent()?.navigate(
+    Routes.ADDRESS_BOOK,
+  )
+}
+  style={styles.actionRow}>
+  <Text style={styles.actionText}>
+    Delivery Addresses
+  </Text>
 
+  <Text style={styles.addressArrow}>
+    ›
+  </Text>
+</TouchableOpacity>
       <TouchableOpacity
         onPress={handleLogout}
         style={styles.actionRow}>

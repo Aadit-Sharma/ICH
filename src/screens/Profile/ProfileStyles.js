@@ -38,6 +38,11 @@ const styles = StyleSheet.create({
   cancelButtonText: {color: '#475569', fontSize: 14, fontWeight: '700'},
   saveButton: {height: 42, marginLeft: 10, paddingHorizontal: 20, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#005BAC'},
   saveButtonText: {color: '#FFFFFF', fontSize: 14, fontWeight: '800'},
+addressArrow: {
+  color: '#005BAC',
+  fontSize: 28,
+  fontWeight: '600',
+},
 });
 
 export default styles;

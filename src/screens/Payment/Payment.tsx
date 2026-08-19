@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -8,29 +9,25 @@ import {
   View,
 } from 'react-native';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
+import RazorpayCheckout from 'react-native-razorpay';
 import type {PaymentMethod} from '../../types/payment';
-import {processPayment} from '../../services/paymentService';
-import {useDispatch} from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  createOrder,
-} from '../../redux/slices/ordersSlice';
-import {
-  createBill,
-} from '../../redux/slices/billsSlice';
-import {clearCart} from '../../redux/slices/cartSlice';
 import type {CartItem} from '../../types/cart';
 import type {DeliveryAddress} from '../../types/address';
-import {store} from '../../redux/store';
+import {createOrder} from '../../redux/slices/ordersSlice';
+import {createBill} from '../../redux/slices/billsSlice';
+import {clearCart} from '../../redux/slices/cartSlice';
+
 type PaymentStackParamList = {
   Payment: {
-  cartItems: CartItem[];
-  subtotal: number;
-  tax: number;
-  serviceCharge: number;
-  total: number;
-  address: DeliveryAddress;
-};
+    cartItems: CartItem[];
+    subtotal: number;
+    tax: number;
+    serviceCharge: number;
+    total: number;
+    address: DeliveryAddress;
+  };
   Success: {
     placedAt: string;
   };
@@ -41,90 +38,322 @@ type PaymentProps = NativeStackScreenProps<
   'Payment'
 >;
 
+// Android emulator -> Windows host machine
+const BACKEND_URL = 'http://localhost:5000';
 
-
-export default function Payment({navigation, route}: 
-PaymentProps) {
+export default function Payment({navigation, route}: PaymentProps) {
   const {
-  cartItems,
-  subtotal,
-  tax,
-  serviceCharge,
-  total,
-  address,
-} = route.params;
-	const dispatch = useDispatch();
+    cartItems,
+    subtotal,
+    tax,
+    serviceCharge,
+    total,
+    address,
+  } = route.params;
+
+  const dispatch = useDispatch();
+
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethod>('UPI');
 
   const [processing, setProcessing] = useState(false);
-const [paymentError, setPaymentError] = useState('');
+  const [paymentError, setPaymentError] = useState('');
+
   const handlePayment = async () => {
-  setProcessing(true);
- setPaymentError('');
+    setProcessing(true);
+    setPaymentError('');
 
-  try {
-    const payment = await processPayment({
-      orderId: `TEMP-${Date.now()}`,
-      amount: total,
-      method: selectedMethod,
-    });
+    try {
+      /*
+       * COD does not go through Razorpay.
+       * We will handle COD separately later.
+       */
+      if (selectedMethod === 'COD') {
+        setPaymentError(
+          'Cash on Delivery will be connected separately. Please select UPI, Card, or Net Banking for Razorpay.',
+        );
+        return;
+      }
 
-    if (payment.status === 'FAILED') {
-  setPaymentError(
-    'Your payment could not be completed. Please try again.',
+      /*
+       * Get the logged-in user.
+       * We use this only for prefilling Razorpay Checkout.
+       */
+      const savedUser = await AsyncStorage.getItem('user');
+
+      let user: any = null;
+
+      if (savedUser) {
+        user = JSON.parse(savedUser);
+      }
+
+      /*
+       * STEP 1:
+       * Ask our backend to create a Razorpay order.
+       */
+      const response = await fetch(
+        `${BACKEND_URL}/api/payment/create-order`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            amount: total,
+          }),
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success || !data.order) {
+        throw new Error(
+          data.message || 'Unable to create payment order.',
+        );
+      }
+
+      const razorpayOrder = data.order;
+
+      /*
+       * STEP 2:
+       * Open the real Razorpay Checkout.
+       */
+      const options = {
+        key: data.keyId || '',
+        amount: String(razorpayOrder.amount),
+        currency: razorpayOrder.currency,
+        name: 'ICH',
+        description: 'ICH Food Order',
+        order_id: razorpayOrder.id,
+
+        prefill: {
+          name:
+            address?.fullName ||
+            user?.name ||
+            user?.username ||
+            '',
+          contact: address?.phone || '',
+          email: user?.email || '',
+        },
+
+        theme: {
+          color: '#005BAC',
+        },
+      };
+
+      const paymentResponse =
+        await RazorpayCheckout.open(options);
+
+      console.log(
+        'Razorpay checkout success:',
+        paymentResponse,
+      );
+
+      /*
+      * STEP 3:
+      * Send Razorpay's payment response to our backend.
+      *
+      * The backend will verify the signature using
+      * RAZORPAY_KEY_SECRET.
+      */
+      const verificationResponse = await fetch(
+        `${BACKEND_URL}/api/payment/verify`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            razorpay_order_id:
+              paymentResponse.razorpay_order_id,
+
+            razorpay_payment_id:
+              paymentResponse.razorpay_payment_id,
+
+            razorpay_signature:
+              paymentResponse.razorpay_signature,
+          }),
+        },
+      );
+
+      const verificationData =
+        await verificationResponse.json();
+
+      if (
+        !verificationResponse.ok ||
+        !verificationData.success
+      ) {
+        throw new Error(
+          verificationData.message ||
+            'Payment verification failed.',
+        );
+      }
+
+      /*
+ * Payment is now verified by our backend.
+ *
+ * Only NOW do we create the ICH order.
+ */
+
+
+
+const placedAt =
+  new Date().toISOString();
+
+/*
+ * STEP 4:
+ * Create the ICH order on our backend.
+ *
+ * The backend will only accept this because
+ * the Razorpay order was verified first.
+ */
+const orderResponse = await fetch(
+  `${BACKEND_URL}/api/orders`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      userId: user.id,
+
+      username:
+        user.username ||
+        user.name ||
+        '',
+
+      items: cartItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+
+      subtotal,
+      tax,
+      serviceCharge,
+      total,
+
+      address,
+
+      razorpayOrderId:
+        paymentResponse.razorpay_order_id,
+
+      razorpayPaymentId:
+        paymentResponse.razorpay_payment_id,
+    }),
+  },
+);
+
+const orderData =
+  await orderResponse.json();
+
+if (
+  !orderResponse.ok ||
+  !orderData.success ||
+  !orderData.order
+) {
+  throw new Error(
+    orderData.message ||
+      'Unable to create ICH order.',
   );
-  return;
 }
 
-if (payment.status !== 'SUCCESS') {
-  setPaymentError(
-    'Payment could not be completed. Please try again.',
-  );
-  return;
-}
+const backendOrder =
+  orderData.order;
 
-    const savedUser = await AsyncStorage.getItem('user');
+console.log(
+  'ICH order created:',
+  backendOrder,
+);
 
-    if (!savedUser) {
-      throw new Error('Logged-in user session not found.');
-    }
-
-    const user = JSON.parse(savedUser);
-
-    dispatch(
+/*
+ * STEP 5:
+ * Store the backend-created order in Redux.
+ *
+ * We pass the backend order ID so Redux
+ * and the backend refer to the same order.
+ */
+dispatch(
   createOrder({
-    items: cartItems,
-    total,
-    placedAt: payment.createdAt,
-    subtotal,
-    tax,
-    serviceCharge,
-    userId: user.id,
-    username: user.username,
-    address,
+    orderId: backendOrder.id,
+
+    items: backendOrder.items,
+
+    total: backendOrder.total,
+
+    subtotal: backendOrder.subtotal,
+
+    tax: backendOrder.tax,
+
+    serviceCharge:
+      backendOrder.serviceCharge,
+
+    placedAt: backendOrder.placedAt,
+
+    userId: backendOrder.userId,
+
+    username: backendOrder.username,
+
+    address: backendOrder.address,
+
+    paymentStatus:
+      backendOrder.paymentStatus,
+
+    razorpayOrderId:
+      backendOrder.razorpayOrderId,
+
+    razorpayPaymentId:
+      backendOrder.razorpayPaymentId,
   }),
 );
 
-const createdOrder = store.getState().orders.latestOrder;
+/*
+ * STEP 6:
+ * Create the bill only after:
+ *
+ * Razorpay payment verified
+ * +
+ * Backend order created
+ */
+dispatch(
+  createBill({
+    order: backendOrder,
+  }),
+);
 
-if (!createdOrder) {
-  throw new Error('Order creation failed.');
-}
-
-dispatch(createBill({order: createdOrder}));
-
+/*
+ * STEP 7:
+ * Clear the cart only after
+ * everything above succeeded.
+ */
 dispatch(clearCart());
-    navigation.navigate('Success', {
-      placedAt: payment.createdAt,
-    });
-  } catch (error) {
-    console.error('Payment processing failed:', error);
-  } finally {
-    setProcessing(false);
-  }
-};
-   return (
+
+/*
+ * STEP 8:
+ * Go to Success screen.
+ */
+navigation.replace('Success', {
+  placedAt: backendOrder.placedAt,
+});
+    } catch (error: any) {
+      console.error(
+        'Razorpay payment failed:',
+        error,
+      );
+
+      const message =
+        error?.description ||
+        error?.message ||
+        'Payment could not be completed. Please try again.';
+
+      setPaymentError(message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={() => navigation.goBack()}>
@@ -137,16 +366,21 @@ dispatch(clearCart());
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>Choose Payment Method</Text>
+        <Text style={styles.sectionTitle}>
+          Choose Payment Method
+        </Text>
 
         <Pressable
           onPress={() => setSelectedMethod('UPI')}
           style={[
             styles.methodCard,
-            selectedMethod === 'UPI' && styles.selectedCard,
+            selectedMethod === 'UPI' &&
+              styles.selectedCard,
           ]}>
           <View>
-            <Text style={styles.methodTitle}>UPI</Text>
+            <Text style={styles.methodTitle}>
+              UPI
+            </Text>
             <Text style={styles.methodSubtitle}>
               Google Pay, PhonePe, Paytm
             </Text>
@@ -161,10 +395,13 @@ dispatch(clearCart());
           onPress={() => setSelectedMethod('CARD')}
           style={[
             styles.methodCard,
-            selectedMethod === 'CARD' && styles.selectedCard,
+            selectedMethod === 'CARD' &&
+              styles.selectedCard,
           ]}>
           <View>
-            <Text style={styles.methodTitle}>Card</Text>
+            <Text style={styles.methodTitle}>
+              Card
+            </Text>
             <Text style={styles.methodSubtitle}>
               Credit or Debit Card
             </Text>
@@ -176,20 +413,27 @@ dispatch(clearCart());
         </Pressable>
 
         <Pressable
-          onPress={() => setSelectedMethod('NET_BANKING')}
+          onPress={() =>
+            setSelectedMethod('NET_BANKING')
+          }
           style={[
             styles.methodCard,
-            selectedMethod === 'NET_BANKING' && styles.selectedCard,
+            selectedMethod === 'NET_BANKING' &&
+              styles.selectedCard,
           ]}>
           <View>
-            <Text style={styles.methodTitle}>Net Banking</Text>
+            <Text style={styles.methodTitle}>
+              Net Banking
+            </Text>
             <Text style={styles.methodSubtitle}>
               Pay using your bank account
             </Text>
           </View>
 
           <Text style={styles.radio}>
-            {selectedMethod === 'NET_BANKING' ? '●' : '○'}
+            {selectedMethod === 'NET_BANKING'
+              ? '●'
+              : '○'}
           </Text>
         </Pressable>
 
@@ -197,7 +441,8 @@ dispatch(clearCart());
           onPress={() => setSelectedMethod('COD')}
           style={[
             styles.methodCard,
-            selectedMethod === 'COD' && styles.selectedCard,
+            selectedMethod === 'COD' &&
+              styles.selectedCard,
           ]}>
           <View>
             <Text style={styles.methodTitle}>
@@ -214,62 +459,71 @@ dispatch(clearCart());
         </Pressable>
 
         <View style={styles.totalCard}>
-          <Text style={styles.totalLabel}>Amount to Pay</Text>
-          <Text style={styles.totalValue}>₹{total}</Text>
+          <Text style={styles.totalLabel}>
+            Amount to Pay
+          </Text>
+
+          <Text style={styles.totalValue}>
+            ₹{total}
+          </Text>
         </View>
 
-       {paymentError ? (
-  <View style={styles.failureCard}>
-    <Text style={styles.failureIcon}>!</Text>
+        {paymentError ? (
+          <View style={styles.failureCard}>
+            <Text style={styles.failureIcon}>
+              !
+            </Text>
 
-    <Text style={styles.failureTitle}>
-      Payment Failed
-    </Text>
+            <Text style={styles.failureTitle}>
+              Payment Failed
+            </Text>
 
-    <Text style={styles.failureMessage}>
-      {paymentError}
-    </Text>
+            <Text style={styles.failureMessage}>
+              {paymentError}
+            </Text>
 
-    <Pressable
-      onPress={handlePayment}
-      disabled={processing}
-      style={styles.retryButton}>
-      <Text style={styles.retryButtonText}>
-        Try Again
-      </Text>
-    </Pressable>
+            <Pressable
+              onPress={handlePayment}
+              disabled={processing}
+              style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>
+                Try Again
+              </Text>
+            </Pressable>
 
-    <Pressable
-      onPress={() => navigation.goBack()}
-      disabled={processing}
-      style={styles.backToCheckoutButton}>
-      <Text style={styles.backToCheckoutText}>
-        Back to Checkout
-      </Text>
-    </Pressable>
-  </View>
-) : (
-  <Pressable
-    onPress={handlePayment}
-    disabled={processing}
-    style={[
-      styles.payButton,
-      processing && styles.disabledButton,
-    ]}>
-    {processing ? (
-      <View style={styles.processingRow}>
-        <ActivityIndicator color="#FFFFFF" />
-        <Text style={styles.payButtonText}>
-          Processing...
-        </Text>
-      </View>
-    ) : (
-      <Text style={styles.payButtonText}>
-        Pay ₹{total}
-      </Text>
-    )}
-  </Pressable>
-)} 
+            <Pressable
+              onPress={() => navigation.goBack()}
+              disabled={processing}
+              style={styles.backToCheckoutButton}>
+              <Text style={styles.backToCheckoutText}>
+                Back to Checkout
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={handlePayment}
+            disabled={processing}
+            style={[
+              styles.payButton,
+              processing &&
+                styles.disabledButton,
+            ]}>
+            {processing ? (
+              <View style={styles.processingRow}>
+                <ActivityIndicator color="#FFFFFF" />
+
+                <Text style={styles.payButtonText}>
+                  Opening Razorpay...
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.payButtonText}>
+                Pay ₹{total}
+              </Text>
+            )}
+          </Pressable>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -397,71 +651,72 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-failureCard: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 16,
-  padding: 20,
-  marginTop: 22,
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#F5C2C7',
-},
 
-failureIcon: {
-  width: 42,
-  height: 42,
-  borderRadius: 21,
-  backgroundColor: '#FDECEC',
-  color: '#D32F2F',
-  fontSize: 25,
-  fontWeight: '900',
-  textAlign: 'center',
-  lineHeight: 42,
-  marginBottom: 10,
-},
+  failureCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginTop: 22,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F5C2C7',
+  },
 
-failureTitle: {
-  fontSize: 18,
-  fontWeight: '800',
-  color: '#102A43',
-},
+  failureIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FDECEC',
+    color: '#D32F2F',
+    fontSize: 25,
+    fontWeight: '900',
+    textAlign: 'center',
+    lineHeight: 42,
+    marginBottom: 10,
+  },
 
-failureMessage: {
-  fontSize: 13,
-  color: '#627D98',
-  textAlign: 'center',
-  lineHeight: 19,
-  marginTop: 6,
-},
+  failureTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#102A43',
+  },
 
-retryButton: {
-  width: '100%',
-  backgroundColor: '#F9A826',
-  borderRadius: 12,
-  paddingVertical: 14,
-  alignItems: 'center',
-  marginTop: 18,
-},
+  failureMessage: {
+    fontSize: 13,
+    color: '#627D98',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginTop: 6,
+  },
 
-retryButtonText: {
-  color: '#FFFFFF',
-  fontSize: 15,
-  fontWeight: '800',
-},
+  retryButton: {
+    width: '100%',
+    backgroundColor: '#F9A826',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 18,
+  },
 
-backToCheckoutButton: {
-  width: '100%',
-  borderWidth: 1,
-  borderColor: '#005BAC',
-  borderRadius: 12,
-  paddingVertical: 13,
-  alignItems: 'center',
-  marginTop: 10,
-},
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
 
-backToCheckoutText: {
-  color: '#005BAC',
-  fontSize: 15,
-  fontWeight: '800',
-},
+  backToCheckoutButton: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#005BAC',
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  backToCheckoutText: {
+    color: '#005BAC',
+    fontSize: 15,
+    fontWeight: '800',
+  },
 });

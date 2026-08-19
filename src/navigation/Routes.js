@@ -37,6 +37,9 @@ const Routes = {
   CHECKOUT: "Checkout",
   PAYMENT: "Payment",
   SUCCESS: "Success",
+  ORDER_DETAILS: "OrderDetails",
+  ORDER_TRACKING: "OrderTracking",
+  ADDRESS_BOOK:'AddressBook',
 };
 
 // Import/Export

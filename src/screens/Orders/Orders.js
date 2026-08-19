@@ -18,7 +18,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useIsFocused} from '@react-navigation/native';
 import {exportDocumentPdf} from '../../utils/pdfExport';
 import styles from './OrdersStyles';
-
+import Routes from '../../navigation/Routes';
 export default function Orders({navigation}) {
   const insets = useSafeAreaInsets();
   const isFocused = useIsFocused();
@@ -138,7 +138,11 @@ export default function Orders({navigation}) {
           orders.map(order => (
             <Pressable
               key={order.id}
-              onPress={() => setSelectedId(order.id)}
+              onPress={() =>
+                navigation.navigate(Routes.ORDER_DETAILS, {
+                  order,
+                })
+              }
               style={[
                 styles.orderCard,
                 selectedOrder?.id === order.id &&
@@ -193,46 +197,6 @@ export default function Orders({navigation}) {
                   ₹{order.total}
                 </Text>
               </View>
-
-              {selectedOrder?.id === order.id &&
-                order.address && (
-                  <View style={styles.addressSection}>
-                    <Text style={styles.addressTitle}>
-                      Delivery Address
-                    </Text>
-
-                    <Text style={styles.addressName}>
-                      {order.address.fullName}
-                    </Text>
-
-                    <Text style={styles.addressText}>
-                      {order.address.addressLine1}
-                    </Text>
-
-                    <Text style={styles.addressText}>
-                      {order.address.city},{' '}
-                      {order.address.state} -{' '}
-                      {order.address.pincode}
-                    </Text>
-
-                    {order.address.landmark ? (
-                      <Text style={styles.addressText}>
-                        Landmark: {order.address.landmark}
-                      </Text>
-                    ) : null}
-
-                    <Text style={styles.addressPhone}>
-                      Phone: {order.address.phone}
-                    </Text>
-
-                    {order.address.deliveryInstructions ? (
-                      <Text style={styles.addressText}>
-                        Instructions:{' '}
-                        {order.address.deliveryInstructions}
-                      </Text>
-                    ) : null}
-                  </View>
-                )}
             </Pressable>
           ))
         ) : (
