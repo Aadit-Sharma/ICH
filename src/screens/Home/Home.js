@@ -153,7 +153,11 @@ export default function Home({navigation}) {
       <ScreenContainer style={styles.safeAreaContainer}>
         <AppHeader
           greeting={greeting}
-          username={user?.firstName || 'User'}
+          username={
+            user?.firstName
+              ? user.firstName
+              : user?.username || 'User'
+          }
           subtitle="Indian Coffee House"
           cartCount={cartCount}
           onCartPress={handleCartPress}

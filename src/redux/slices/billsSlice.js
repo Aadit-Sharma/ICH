@@ -29,11 +29,11 @@ const billsSlice = createSlice({
         tax: order.tax,
         serviceCharge: order.serviceCharge,
         paymentStatus: order.paymentStatus || 'Paid',
-paymentId: order.paymentId,
-paymentMethod: order.paymentMethod,
-userId: order.userId,
-username: order.username,
-address: order.address,
+        paymentId: order.razorpayPaymentId,
+        paymentMethod: 'Razorpay',
+        userId: order.userId,
+        username: order.username,
+        address: order.address,
       };
 
       if (!state.billsByUser[userKey]) {

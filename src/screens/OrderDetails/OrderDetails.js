@@ -1,15 +1,33 @@
 import React from 'react';
 import {
+  Image,
+  Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+
 import Routes from '../../navigation/Routes';
-export default function OrderDetails({navigation, route}) {
+
+export default function OrderDetails({
+  navigation,
+  route,
+}) {
   const order = route.params?.order;
+  const insets = useSafeAreaInsets();
+
+  const topPadding =
+    (Platform.OS === 'android'
+      ? StatusBar.currentHeight || insets.top
+      : insets.top) + 12;
 
   if (!order) {
     return (
@@ -43,17 +61,49 @@ export default function OrderDetails({navigation, route}) {
 
   const orderedAt = new Date(order.placedAt);
 
+  const paymentMethod =
+    order.paymentMethod ||
+    (order.razorpayPaymentId
+      ? 'Razorpay'
+      : 'Not available');
+
+  const transactionId =
+    order.razorpayPaymentId ||
+    'Not applicable';
+
+  const paymentStatus =
+    order.paymentStatus || 'Unknown';
+
   return (
     <SafeAreaView
       style={styles.safeArea}
-      edges={['bottom']}>
-      <View style={styles.header}>
+      edges={[]}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#1565C0"
+      />
+
+      <View
+        style={[
+          styles.header,
+          {
+            height: Math.max(92, topPadding + 56),
+            paddingTop: topPadding,
+          },
+        ]}>
+
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back">
-          <Text style={styles.backText}>‹</Text>
+
+          <Image
+            source={require('../../assets/icons/back arrow.png')}
+            style={styles.backIcon}
+            resizeMode="contain"
+          />
+
         </Pressable>
 
         <Text style={styles.headerTitle}>
@@ -61,6 +111,7 @@ export default function OrderDetails({navigation, route}) {
         </Text>
 
         <View style={styles.headerSpacer} />
+
       </View>
 
       <ScrollView
@@ -205,7 +256,8 @@ export default function OrderDetails({navigation, route}) {
 
             {order.address.deliveryInstructions ? (
               <Text style={styles.instructions}>
-                Instructions: {order.address.deliveryInstructions}
+                Instructions:{' '}
+                {order.address.deliveryInstructions}
               </Text>
             ) : null}
           </View>
@@ -223,7 +275,7 @@ export default function OrderDetails({navigation, route}) {
             </Text>
 
             <Text style={styles.summaryValue}>
-              {order.paymentMethod || 'Not available'}
+              {paymentMethod}
             </Text>
           </View>
 
@@ -235,7 +287,7 @@ export default function OrderDetails({navigation, route}) {
             <Text
               style={styles.transactionId}
               numberOfLines={1}>
-              {order.paymentId || 'Not available'}
+              {transactionId}
             </Text>
           </View>
 
@@ -244,10 +296,15 @@ export default function OrderDetails({navigation, route}) {
               Status
             </Text>
 
-            <Text style={styles.paidStatus}>
-              {order.paymentStatus === 'SUCCESS'
+            <Text
+              style={[
+                styles.paidStatus,
+                paymentStatus === 'Pending' &&
+                  styles.pendingStatus,
+              ]}>
+              {paymentStatus === 'Paid'
                 ? '✓ Paid'
-                : order.paymentStatus || 'Unknown'}
+                : paymentStatus}
             </Text>
           </View>
         </View>
@@ -255,16 +312,18 @@ export default function OrderDetails({navigation, route}) {
         {/* TRACK ORDER */}
         <Pressable
           onPress={() =>
-            navigation.navigate(Routes.ORDER_TRACKING, {
-              order,
-            })
+            navigation.navigate(
+              Routes.ORDER_TRACKING,
+              {
+                order,
+              },
+            )
           }
           style={styles.trackButton}>
           <Text style={styles.trackButtonText}>
             Track Order
           </Text>
         </Pressable>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -275,40 +334,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F7FA',
   },
-
   header: {
-    height: 64,
-    backgroundColor: '#005BAC',
+    backgroundColor: '#1565C0',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
 
   backButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  backText: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    lineHeight: 38,
-    fontWeight: '300',
+  backIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#FFFFFF',
   },
 
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     color: '#FFFFFF',
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '800',
   },
 
   headerSpacer: {
-    width: 42,
+    width: 44,
   },
+
+
 
   content: {
     padding: 16,
@@ -489,6 +547,10 @@ const styles = StyleSheet.create({
     color: '#1E8E3E',
     fontSize: 13,
     fontWeight: '800',
+  },
+
+  pendingStatus: {
+    color: '#D97706',
   },
 
   trackButton: {

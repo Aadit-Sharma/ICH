@@ -2,12 +2,19 @@ import React, {useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
+  Platform,
   Pressable,
-  SafeAreaView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import type {NativeStackScreenProps} from '@react-navigation/native-stack';
 import RazorpayCheckout from 'react-native-razorpay';
 import type {PaymentMethod} from '../../types/payment';
@@ -28,6 +35,7 @@ type PaymentStackParamList = {
     total: number;
     address: DeliveryAddress;
   };
+
   Success: {
     placedAt: string;
   };
@@ -39,9 +47,12 @@ type PaymentProps = NativeStackScreenProps<
 >;
 
 // Android emulator -> Windows host machine
-const BACKEND_URL = 'http://localhost:5000';
+const BACKEND_URL = 'http://192.168.231.143:5000';
 
-export default function Payment({navigation, route}: PaymentProps) {
+export default function Payment({
+  navigation,
+  route,
+}: PaymentProps) {
   const {
     cartItems,
     subtotal,
@@ -50,14 +61,23 @@ export default function Payment({navigation, route}: PaymentProps) {
     total,
     address,
   } = route.params;
+  const insets = useSafeAreaInsets();
+
+    const topPadding =
+      (Platform.OS === 'android'
+        ? StatusBar.currentHeight || insets.top
+        : insets.top) + 12;
 
   const dispatch = useDispatch();
 
   const [selectedMethod, setSelectedMethod] =
     useState<PaymentMethod>('UPI');
 
-  const [processing, setProcessing] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
+  const [processing, setProcessing] =
+    useState(false);
+
+  const [paymentError, setPaymentError] =
+    useState('');
 
   const handlePayment = async () => {
     setProcessing(true);
@@ -65,27 +85,169 @@ export default function Payment({navigation, route}: PaymentProps) {
 
     try {
       /*
-       * COD does not go through Razorpay.
-       * We will handle COD separately later.
+       * Get the logged-in user
        */
-      if (selectedMethod === 'COD') {
-        setPaymentError(
-          'Cash on Delivery will be connected separately. Please select UPI, Card, or Net Banking for Razorpay.',
-        );
-        return;
-      }
-
-      /*
-       * Get the logged-in user.
-       * We use this only for prefilling Razorpay Checkout.
-       */
-      const savedUser = await AsyncStorage.getItem('user');
+      const savedUser =
+        await AsyncStorage.getItem('user');
 
       let user: any = null;
 
       if (savedUser) {
         user = JSON.parse(savedUser);
       }
+
+      if (!user?.id) {
+        throw new Error(
+          'Please login again before placing an order.',
+        );
+      }
+
+      /*
+       * CASH ON DELIVERY
+       *
+       * COD does not use Razorpay.
+       * We directly create the order on our backend.
+       */
+      if (selectedMethod === 'COD') {
+        const placedAt =
+          new Date().toISOString();
+
+        const orderResponse = await fetch(
+          `${BACKEND_URL}/api/orders`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
+
+              username:
+                user.username ||
+                user.name ||
+                '',
+
+              items: cartItems.map(item => ({
+                id: item.id,
+                name: item.name,
+                price: item.price,
+                quantity: item.quantity,
+              })),
+
+              subtotal,
+              tax,
+              serviceCharge,
+              total,
+
+              address,
+
+              paymentMethod:
+                'Cash on Delivery',
+
+              razorpayOrderId: '',
+              razorpayPaymentId: '',
+            }),
+          },
+        );
+
+        const orderData =
+          await orderResponse.json();
+
+        if (
+          !orderResponse.ok ||
+          !orderData.success ||
+          !orderData.order
+        ) {
+          throw new Error(
+            orderData.message ||
+              'Unable to create COD order.',
+          );
+        }
+
+        const backendOrder =
+          orderData.order;
+
+        console.log(
+          'COD order created:',
+          backendOrder,
+        );
+
+        /*
+         * Store the backend-created order in Redux
+         */
+        dispatch(
+          createOrder({
+            orderId: backendOrder.id,
+
+            items: backendOrder.items,
+
+            total: backendOrder.total,
+
+            subtotal:
+              backendOrder.subtotal,
+
+            tax: backendOrder.tax,
+
+            serviceCharge:
+              backendOrder.serviceCharge,
+
+            placedAt:
+              backendOrder.placedAt,
+
+            userId:
+              backendOrder.userId,
+
+            username:
+              backendOrder.username,
+
+            address:
+              backendOrder.address,
+
+            paymentStatus:
+              backendOrder.paymentStatus,
+
+            paymentMethod:
+              backendOrder.paymentMethod,
+
+            razorpayOrderId:
+              backendOrder.razorpayOrderId,
+
+            razorpayPaymentId:
+              backendOrder.razorpayPaymentId,
+          }),
+        );
+
+        /*
+         * Create bill after backend order
+         * has been successfully created.
+         */
+        dispatch(
+          createBill({
+            order: backendOrder,
+          }),
+        );
+
+        /*
+         * Clear cart only after order
+         * and bill have been created.
+         */
+        dispatch(clearCart());
+
+        /*
+         * Go to Success screen.
+         */
+        navigation.replace('Success', {
+          placedAt:
+            backendOrder.placedAt ||
+            placedAt,
+        });
+
+        return;
+      }
+
+      /*
+       * RAZORPAY PAYMENT
+       */
 
       /*
        * STEP 1:
@@ -96,7 +258,8 @@ export default function Payment({navigation, route}: PaymentProps) {
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':
+              'application/json',
           },
           body: JSON.stringify({
             amount: total,
@@ -104,27 +267,39 @@ export default function Payment({navigation, route}: PaymentProps) {
         },
       );
 
-      const data = await response.json();
+      const data =
+        await response.json();
 
-      if (!response.ok || !data.success || !data.order) {
+      if (
+        !response.ok ||
+        !data.success ||
+        !data.order
+      ) {
         throw new Error(
-          data.message || 'Unable to create payment order.',
+          data.message ||
+            'Unable to create payment order.',
         );
       }
 
-      const razorpayOrder = data.order;
+      const razorpayOrder =
+        data.order;
 
       /*
        * STEP 2:
-       * Open the real Razorpay Checkout.
+       * Open Razorpay Checkout.
        */
       const options = {
         key: data.keyId || '',
-        amount: String(razorpayOrder.amount),
-        currency: razorpayOrder.currency,
+        amount: String(
+          razorpayOrder.amount,
+        ),
+        currency:
+          razorpayOrder.currency,
         name: 'ICH',
-        description: 'ICH Food Order',
-        order_id: razorpayOrder.id,
+        description:
+          'ICH Food Order',
+        order_id:
+          razorpayOrder.id,
 
         prefill: {
           name:
@@ -132,8 +307,12 @@ export default function Payment({navigation, route}: PaymentProps) {
             user?.name ||
             user?.username ||
             '',
-          contact: address?.phone || '',
-          email: user?.email || '',
+
+          contact:
+            address?.phone || '',
+
+          email:
+            user?.email || '',
         },
 
         theme: {
@@ -142,7 +321,9 @@ export default function Payment({navigation, route}: PaymentProps) {
       };
 
       const paymentResponse =
-        await RazorpayCheckout.open(options);
+        await RazorpayCheckout.open(
+          options,
+        );
 
       console.log(
         'Razorpay checkout success:',
@@ -150,31 +331,31 @@ export default function Payment({navigation, route}: PaymentProps) {
       );
 
       /*
-      * STEP 3:
-      * Send Razorpay's payment response to our backend.
-      *
-      * The backend will verify the signature using
-      * RAZORPAY_KEY_SECRET.
-      */
-      const verificationResponse = await fetch(
-        `${BACKEND_URL}/api/payment/verify`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+       * STEP 3:
+       * Verify Razorpay payment
+       * with our backend.
+       */
+      const verificationResponse =
+        await fetch(
+          `${BACKEND_URL}/api/payment/verify`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              razorpay_order_id:
+                paymentResponse.razorpay_order_id,
+
+              razorpay_payment_id:
+                paymentResponse.razorpay_payment_id,
+
+              razorpay_signature:
+                paymentResponse.razorpay_signature,
+            }),
           },
-          body: JSON.stringify({
-            razorpay_order_id:
-              paymentResponse.razorpay_order_id,
-
-            razorpay_payment_id:
-              paymentResponse.razorpay_payment_id,
-
-            razorpay_signature:
-              paymentResponse.razorpay_signature,
-          }),
-        },
-      );
+        );
 
       const verificationData =
         await verificationResponse.json();
@@ -190,155 +371,157 @@ export default function Payment({navigation, route}: PaymentProps) {
       }
 
       /*
- * Payment is now verified by our backend.
- *
- * Only NOW do we create the ICH order.
- */
+       * STEP 4:
+       * Create the ICH order.
+       */
+      const orderResponse =
+        await fetch(
+          `${BACKEND_URL}/api/orders`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+            body: JSON.stringify({
+              userId: user.id,
 
+              username:
+                user.username ||
+                user.name ||
+                '',
 
+              items: cartItems.map(
+                item => ({
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  quantity:
+                    item.quantity,
+                }),
+              ),
 
-const placedAt =
-  new Date().toISOString();
+              subtotal,
+              tax,
+              serviceCharge,
+              total,
 
-/*
- * STEP 4:
- * Create the ICH order on our backend.
- *
- * The backend will only accept this because
- * the Razorpay order was verified first.
- */
-const orderResponse = await fetch(
-  `${BACKEND_URL}/api/orders`,
-  {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      userId: user.id,
+              address,
 
-      username:
-        user.username ||
-        user.name ||
-        '',
+              paymentMethod:
+                'Razorpay',
 
-      items: cartItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-      })),
+              razorpayOrderId:
+                paymentResponse.razorpay_order_id,
 
-      subtotal,
-      tax,
-      serviceCharge,
-      total,
+              razorpayPaymentId:
+                paymentResponse.razorpay_payment_id,
+            }),
+          },
+        );
 
-      address,
+      const orderData =
+        await orderResponse.json();
 
-      razorpayOrderId:
-        paymentResponse.razorpay_order_id,
+      if (
+        !orderResponse.ok ||
+        !orderData.success ||
+        !orderData.order
+      ) {
+        throw new Error(
+          orderData.message ||
+            'Unable to create ICH order.',
+        );
+      }
 
-      razorpayPaymentId:
-        paymentResponse.razorpay_payment_id,
-    }),
-  },
-);
+      const backendOrder =
+        orderData.order;
 
-const orderData =
-  await orderResponse.json();
+      console.log(
+        'ICH order created:',
+        backendOrder,
+      );
 
-if (
-  !orderResponse.ok ||
-  !orderData.success ||
-  !orderData.order
-) {
-  throw new Error(
-    orderData.message ||
-      'Unable to create ICH order.',
-  );
-}
+      /*
+       * STEP 5:
+       * Store backend-created order in Redux.
+       */
+      dispatch(
+        createOrder({
+          orderId:
+            backendOrder.id,
 
-const backendOrder =
-  orderData.order;
+          items:
+            backendOrder.items,
 
-console.log(
-  'ICH order created:',
-  backendOrder,
-);
+          total:
+            backendOrder.total,
 
-/*
- * STEP 5:
- * Store the backend-created order in Redux.
- *
- * We pass the backend order ID so Redux
- * and the backend refer to the same order.
- */
-dispatch(
-  createOrder({
-    orderId: backendOrder.id,
+          subtotal:
+            backendOrder.subtotal,
 
-    items: backendOrder.items,
+          tax:
+            backendOrder.tax,
 
-    total: backendOrder.total,
+          serviceCharge:
+            backendOrder.serviceCharge,
 
-    subtotal: backendOrder.subtotal,
+          placedAt:
+            backendOrder.placedAt,
 
-    tax: backendOrder.tax,
+          userId:
+            backendOrder.userId,
 
-    serviceCharge:
-      backendOrder.serviceCharge,
+          username:
+            backendOrder.username,
 
-    placedAt: backendOrder.placedAt,
+          address:
+            backendOrder.address,
 
-    userId: backendOrder.userId,
+          paymentStatus:
+            backendOrder.paymentStatus,
 
-    username: backendOrder.username,
+          paymentMethod:
+            backendOrder.paymentMethod,
 
-    address: backendOrder.address,
+          razorpayOrderId:
+            backendOrder.razorpayOrderId,
 
-    paymentStatus:
-      backendOrder.paymentStatus,
+          razorpayPaymentId:
+            backendOrder.razorpayPaymentId,
+        }),
+      );
 
-    razorpayOrderId:
-      backendOrder.razorpayOrderId,
+      /*
+       * STEP 6:
+       * Create bill.
+       */
+      dispatch(
+        createBill({
+          order: backendOrder,
+        }),
+      );
 
-    razorpayPaymentId:
-      backendOrder.razorpayPaymentId,
-  }),
-);
+      /*
+       * STEP 7:
+       * Clear cart.
+       */
+      dispatch(clearCart());
 
-/*
- * STEP 6:
- * Create the bill only after:
- *
- * Razorpay payment verified
- * +
- * Backend order created
- */
-dispatch(
-  createBill({
-    order: backendOrder,
-  }),
-);
-
-/*
- * STEP 7:
- * Clear the cart only after
- * everything above succeeded.
- */
-dispatch(clearCart());
-
-/*
- * STEP 8:
- * Go to Success screen.
- */
-navigation.replace('Success', {
-  placedAt: backendOrder.placedAt,
-});
+      /*
+       * STEP 8:
+       * Go to Success screen.
+       */
+      navigation.replace(
+        'Success',
+        {
+          placedAt:
+            backendOrder.placedAt,
+        },
+      );
     } catch (error: any) {
       console.error(
-        'Razorpay payment failed:',
+        'Payment/order failed:',
         error,
       );
 
@@ -354,131 +537,197 @@ navigation.replace('Success', {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Text style={styles.back}>‹</Text>
+    <SafeAreaView
+      style={styles.container}
+      edges={[]}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#1565C0"
+      />
+
+      <View
+        style={[
+          styles.header,
+          {
+            height: Math.max(92, topPadding + 56),
+            paddingTop: topPadding,
+          },
+        ]}>
+
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Go back">
+
+          <Image
+            source={require('../../assets/icons/back arrow.png')}
+            style={styles.backIcon}
+            resizeMode="contain"
+          />
+
         </Pressable>
 
-        <Text style={styles.headerTitle}>Payment</Text>
+        <Text style={styles.headerTitle}>
+          Payment
+        </Text>
 
         <View style={styles.headerSpacer} />
+
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.sectionTitle}>
+        <Text
+          style={styles.sectionTitle}>
           Choose Payment Method
         </Text>
 
         <Pressable
-          onPress={() => setSelectedMethod('UPI')}
+          onPress={() =>
+            setSelectedMethod('UPI')
+          }
           style={[
             styles.methodCard,
             selectedMethod === 'UPI' &&
               styles.selectedCard,
           ]}>
           <View>
-            <Text style={styles.methodTitle}>
+            <Text
+              style={styles.methodTitle}>
               UPI
             </Text>
-            <Text style={styles.methodSubtitle}>
+
+            <Text
+              style={styles.methodSubtitle}>
               Google Pay, PhonePe, Paytm
             </Text>
           </View>
 
           <Text style={styles.radio}>
-            {selectedMethod === 'UPI' ? '●' : '○'}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setSelectedMethod('CARD')}
-          style={[
-            styles.methodCard,
-            selectedMethod === 'CARD' &&
-              styles.selectedCard,
-          ]}>
-          <View>
-            <Text style={styles.methodTitle}>
-              Card
-            </Text>
-            <Text style={styles.methodSubtitle}>
-              Credit or Debit Card
-            </Text>
-          </View>
-
-          <Text style={styles.radio}>
-            {selectedMethod === 'CARD' ? '●' : '○'}
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() =>
-            setSelectedMethod('NET_BANKING')
-          }
-          style={[
-            styles.methodCard,
-            selectedMethod === 'NET_BANKING' &&
-              styles.selectedCard,
-          ]}>
-          <View>
-            <Text style={styles.methodTitle}>
-              Net Banking
-            </Text>
-            <Text style={styles.methodSubtitle}>
-              Pay using your bank account
-            </Text>
-          </View>
-
-          <Text style={styles.radio}>
-            {selectedMethod === 'NET_BANKING'
+            {selectedMethod === 'UPI'
               ? '●'
               : '○'}
           </Text>
         </Pressable>
 
         <Pressable
-          onPress={() => setSelectedMethod('COD')}
+          onPress={() =>
+            setSelectedMethod('CARD')
+          }
+          style={[
+            styles.methodCard,
+            selectedMethod === 'CARD' &&
+              styles.selectedCard,
+          ]}>
+          <View>
+            <Text
+              style={styles.methodTitle}>
+              Card
+            </Text>
+
+            <Text
+              style={styles.methodSubtitle}>
+              Credit or Debit Card
+            </Text>
+          </View>
+
+          <Text style={styles.radio}>
+            {selectedMethod === 'CARD'
+              ? '●'
+              : '○'}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() =>
+            setSelectedMethod(
+              'NET_BANKING',
+            )
+          }
+          style={[
+            styles.methodCard,
+            selectedMethod ===
+              'NET_BANKING' &&
+              styles.selectedCard,
+          ]}>
+          <View>
+            <Text
+              style={styles.methodTitle}>
+              Net Banking
+            </Text>
+
+            <Text
+              style={styles.methodSubtitle}>
+              Pay using your bank account
+            </Text>
+          </View>
+
+          <Text style={styles.radio}>
+            {selectedMethod ===
+            'NET_BANKING'
+              ? '●'
+              : '○'}
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() =>
+            setSelectedMethod('COD')
+          }
           style={[
             styles.methodCard,
             selectedMethod === 'COD' &&
               styles.selectedCard,
           ]}>
           <View>
-            <Text style={styles.methodTitle}>
+            <Text
+              style={styles.methodTitle}>
               Cash on Delivery
             </Text>
-            <Text style={styles.methodSubtitle}>
+
+            <Text
+              style={styles.methodSubtitle}>
               Pay when your order arrives
             </Text>
           </View>
 
           <Text style={styles.radio}>
-            {selectedMethod === 'COD' ? '●' : '○'}
+            {selectedMethod === 'COD'
+              ? '●'
+              : '○'}
           </Text>
         </Pressable>
 
-        <View style={styles.totalCard}>
-          <Text style={styles.totalLabel}>
+        <View
+          style={styles.totalCard}>
+          <Text
+            style={styles.totalLabel}>
             Amount to Pay
           </Text>
 
-          <Text style={styles.totalValue}>
+          <Text
+            style={styles.totalValue}>
             ₹{total}
           </Text>
         </View>
 
         {paymentError ? (
-          <View style={styles.failureCard}>
-            <Text style={styles.failureIcon}>
+          <View
+            style={styles.failureCard}>
+            <Text
+              style={styles.failureIcon}>
               !
             </Text>
 
-            <Text style={styles.failureTitle}>
+            <Text
+              style={styles.failureTitle}>
               Payment Failed
             </Text>
 
-            <Text style={styles.failureMessage}>
+            <Text
+              style={
+                styles.failureMessage
+              }>
               {paymentError}
             </Text>
 
@@ -486,16 +735,26 @@ navigation.replace('Success', {
               onPress={handlePayment}
               disabled={processing}
               style={styles.retryButton}>
-              <Text style={styles.retryButtonText}>
+              <Text
+                style={
+                  styles.retryButtonText
+                }>
                 Try Again
               </Text>
             </Pressable>
 
             <Pressable
-              onPress={() => navigation.goBack()}
+              onPress={() =>
+                navigation.goBack()
+              }
               disabled={processing}
-              style={styles.backToCheckoutButton}>
-              <Text style={styles.backToCheckoutText}>
+              style={
+                styles.backToCheckoutButton
+              }>
+              <Text
+                style={
+                  styles.backToCheckoutText
+                }>
                 Back to Checkout
               </Text>
             </Pressable>
@@ -510,16 +769,31 @@ navigation.replace('Success', {
                 styles.disabledButton,
             ]}>
             {processing ? (
-              <View style={styles.processingRow}>
-                <ActivityIndicator color="#FFFFFF" />
+              <View
+                style={
+                  styles.processingRow
+                }>
+                <ActivityIndicator
+                  color="#FFFFFF"
+                />
 
-                <Text style={styles.payButtonText}>
-                  Opening Razorpay...
+                <Text
+                  style={
+                    styles.payButtonText
+                  }>
+                  {selectedMethod === 'COD'
+                    ? 'Placing Order...'
+                    : 'Opening Razorpay...'}
                 </Text>
               </View>
             ) : (
-              <Text style={styles.payButtonText}>
-                Pay ₹{total}
+              <Text
+                style={
+                  styles.payButtonText
+                }>
+                {selectedMethod === 'COD'
+                  ? `Place Order • ₹${total}`
+                  : `Pay ₹${total}`}
               </Text>
             )}
           </Pressable>
@@ -536,17 +810,23 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
-    backgroundColor: '#005BAC',
+    backgroundColor: '#1565C0',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
   },
 
-  back: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    lineHeight: 36,
+  backButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  backIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#FFFFFF',
   },
 
   headerTitle: {
@@ -558,7 +838,7 @@ const styles = StyleSheet.create({
   },
 
   headerSpacer: {
-    width: 30,
+    width: 44,
   },
 
   content: {

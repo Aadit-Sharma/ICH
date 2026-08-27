@@ -1,12 +1,20 @@
 import React from 'react';
 import {
+  Image,
+  Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+
 import {useSelector} from 'react-redux';
 const STEPS = [
   {
@@ -44,6 +52,12 @@ export default function OrderTracking({
   route,
 }) {
   const passedOrder = route.params?.order;
+  const insets = useSafeAreaInsets();
+
+  const topPadding =
+    (Platform.OS === 'android'
+      ? StatusBar.currentHeight || insets.top
+      : insets.top) + 12;
 
 const ordersByUser = useSelector(
   state => state.orders.ordersByUser,
@@ -57,11 +71,32 @@ const order = passedOrder
   if (!order) {
     return (
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.header}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#1565C0"
+        />
+
+        <View
+          style={[
+            styles.header,
+            {
+              height: Math.max(92, topPadding + 56),
+              paddingTop: topPadding,
+            },
+          ]}>
+
           <Pressable
             onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backText}>‹</Text>
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Go back">
+
+            <Image
+              source={require('../../assets/icons/back arrow.png')}
+              style={styles.backIcon}
+              resizeMode="contain"
+            />
+
           </Pressable>
 
           <Text style={styles.headerTitle}>
@@ -69,6 +104,7 @@ const order = passedOrder
           </Text>
 
           <View style={styles.headerSpacer} />
+
         </View>
 
         <View style={styles.emptyContainer}>
@@ -90,16 +126,35 @@ const order = passedOrder
 
   return (
     <SafeAreaView
-      style={styles.safeArea}
-      edges={['bottom']}>
+    style={styles.safeArea}
+    edges={[]}>
 
-      <View style={styles.header}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#1565C0"
+      />
+
+      <View
+        style={[
+          styles.header,
+          {
+            height: Math.max(92, topPadding + 56),
+            paddingTop: topPadding,
+          },
+        ]}>
+
         <Pressable
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           accessibilityRole="button"
           accessibilityLabel="Go back">
-          <Text style={styles.backText}>‹</Text>
+
+          <Image
+            source={require('../../assets/icons/back arrow.png')}
+            style={styles.backIcon}
+            resizeMode="contain"
+          />
+
         </Pressable>
 
         <Text style={styles.headerTitle}>
@@ -107,6 +162,7 @@ const order = passedOrder
         </Text>
 
         <View style={styles.headerSpacer} />
+
       </View>
 
       <ScrollView
@@ -282,37 +338,35 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 64,
-    backgroundColor: '#005BAC',
+    backgroundColor: '#1565C0',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
 
   backButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  backText: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    lineHeight: 38,
-    fontWeight: '300',
+  backIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#FFFFFF',
   },
 
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     color: '#FFFFFF',
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '800',
   },
 
   headerSpacer: {
-    width: 42,
+    width: 44,
   },
 
   content: {

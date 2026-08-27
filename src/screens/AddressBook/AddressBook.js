@@ -1,25 +1,37 @@
 import React, {useEffect, useState} from 'react';
 import {
   Alert,
+  Image,
+  Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   addAddress,
   deleteAddress,
   selectAddress,
+  clearUserAddresses,
 } from '../../redux/slices/addressSlice';
+import {
+  getAddresses,
+  createAddress,
+  deleteAddressApi,
+} from '../../services/addressService';
 
 export default function AddressBook({navigation}) {
   const dispatch = useDispatch();
-
+  const insets = useSafeAreaInsets();
   const [currentUser, setCurrentUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
@@ -41,26 +53,58 @@ export default function AddressBook({navigation}) {
     state => state.addresses.selectedAddressByUser,
   );
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const savedUser =
-          await AsyncStorage.getItem('user');
+ useEffect(() => {
+  const loadData = async () => {
+    try {
+      const savedUser =
+        await AsyncStorage.getItem('user');
 
-        if (savedUser) {
-          setCurrentUser(JSON.parse(savedUser));
-        }
-      } catch (error) {
-        console.log(
-          'Error loading user in Address Book:',
-          error,
-        );
+      if (!savedUser) {
+        setCurrentUser(null);
+        return;
       }
-    };
 
-    loadUser();
-  }, []);
+      const user = JSON.parse(savedUser);
 
+      setCurrentUser(user);
+
+      if (user?.id == null) {
+        return;
+      }
+
+      // Clear old Redux addresses for this user.
+      dispatch(
+        clearUserAddresses({
+          userId: user.id,
+        }),
+      );
+
+      // Load latest addresses from MongoDB.
+      const result = await getAddresses(user.id);
+
+      if (
+        result.success &&
+        result.data?.addresses
+      ) {
+        result.data.addresses.forEach(address => {
+          dispatch(
+            addAddress({
+              userId: user.id,
+              address,
+            }),
+          );
+        });
+      }
+    } catch (error) {
+      console.log(
+        'Error loading Address Book:',
+        error,
+      );
+    }
+  };
+
+  loadData();
+}, [dispatch]);
   const userKey =
     currentUser?.id == null
       ? null
@@ -87,7 +131,7 @@ export default function AddressBook({navigation}) {
     setDeliveryInstructions('');
   };
 
-  const handleAddAddress = () => {
+  const handleAddAddress = async() => {
     if (!currentUser?.id) {
       Alert.alert(
         'Login required',
@@ -127,51 +171,97 @@ export default function AddressBook({navigation}) {
       return;
     }
 
+    
+
+    const addressData = {
+  userId: currentUser.id,
+  fullName: fullName.trim(),
+  phone: phone.trim(),
+  addressLine1: addressLine1.trim(),
+  city: city.trim(),
+  state: stateName.trim(),
+  pincode: pincode.trim(),
+  landmark: landmark.trim(),
+  deliveryInstructions:
+    deliveryInstructions.trim(),
+};
+
+try {
+  const result = await createAddress(
+    addressData,
+  );
+
+  if (!result.success) {
+    Alert.alert(
+      'Unable to Save Address',
+      result.data?.message ||
+        'Unable to save address.',
+    );
+    return;
+  }
+
+  if (!result.data?.address) {
+    Alert.alert(
+      'Unable to Save Address',
+      'The server did not return the saved address.',
+    );
+    return;
+  }
+
+  dispatch(
+    addAddress({
+      userId: currentUser.id,
+      address: result.data.address,
+    }),
+  );
+
+  clearForm();
+  setShowForm(false);
+} catch (error) {
+  console.log(
+    'Create address error:',
+    error,
+  );
+
+    Alert.alert(
+    'Unable to Save Address',
+    'Please try again.',
+  );
+  }
+};
+ 
+const handleDelete = async addressId => {
+  try {
+    const result =
+      await deleteAddressApi(addressId);
+
+    if (!result.success) {
+      Alert.alert(
+        'Unable to Delete',
+        result.data?.message ||
+          'Unable to delete address.',
+      );
+      return;
+    }
+
     dispatch(
-      addAddress({
+      deleteAddress({
         userId: currentUser.id,
-        address: {
-          fullName: fullName.trim(),
-          phone: phone.trim(),
-          addressLine1: addressLine1.trim(),
-          city: city.trim(),
-          state: stateName.trim(),
-          pincode: pincode.trim(),
-          landmark: landmark.trim(),
-          deliveryInstructions:
-            deliveryInstructions.trim(),
-        },
+        addressId,
       }),
     );
-
-    clearForm();
-    setShowForm(false);
-  };
-
-  const handleDelete = addressId => {
-    Alert.alert(
-      'Delete Address',
-      'Are you sure you want to delete this address?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(
-              deleteAddress({
-                userId: currentUser.id,
-                addressId,
-              }),
-            );
-          },
-        },
-      ],
+  } catch (error) {
+    console.log(
+      'Delete address error:',
+      error,
     );
-  };
+
+    Alert.alert(
+      'Unable to Delete',
+      'Please try again.',
+    );
+  }
+};
 
   const handleSelect = addressId => {
     dispatch(
@@ -181,27 +271,54 @@ export default function AddressBook({navigation}) {
       }),
     );
   };
-
+  const topPadding =
+  (Platform.OS === 'android'
+    ? StatusBar.currentHeight || insets.top
+    : insets.top) + 12;
   return (
     <SafeAreaView
       style={styles.safeArea}
-      edges={['bottom']}>
+      edges={[]}>
 
       {/* HEADER */}
 
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.headerButton}>
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
+      {/* HEADER */}
 
-        <Text style={styles.headerTitle}>
-          Delivery Addresses
-        </Text>
+    <StatusBar
+      barStyle="light-content"
+      backgroundColor="#1565C0"
+    />
 
-        <View style={styles.headerSpacer} />
-      </View>
+    <View
+      style={[
+        styles.header,
+        {
+          height: Math.max(92, topPadding + 56),
+          paddingTop: topPadding,
+        },
+      ]}>
+
+      <Pressable
+        onPress={() => navigation.goBack()}
+        style={styles.headerButton}
+        accessibilityRole="button"
+        accessibilityLabel="Go back">
+
+        <Image
+          source={require('../../assets/icons/back arrow.png')}
+          style={styles.backIcon}
+          resizeMode="contain"
+        />
+
+      </Pressable>
+
+      <Text style={styles.headerTitle}>
+        Delivery Addresses
+      </Text>
+
+      <View style={styles.headerSpacer} />
+
+    </View>
 
       <ScrollView
         contentContainerStyle={styles.content}
@@ -454,18 +571,35 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 64,
-    backgroundColor: '#005BAC',
+    backgroundColor: '#1565C0',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
 
   headerButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  backIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#FFFFFF',
+  },
+
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+
+  headerSpacer: {
+    width: 44,
   },
 
   backText: {
@@ -475,17 +609,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-
-  headerSpacer: {
-    width: 42,
-  },
+ 
 
   content: {
     padding: 16,

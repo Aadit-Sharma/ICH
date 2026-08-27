@@ -270,6 +270,19 @@ export default function Login({navigation}) {
               </Pressable>
             </Animated.View>
 
+            <Pressable
+              onPress={() =>
+                navigation.navigate(Routes.REGISTER)
+              }
+              disabled={isLoading}
+              style={styles.registerLink}>
+              <Text style={styles.registerLinkText}>
+                Don't have an account?{' '}
+                <Text style={styles.registerLinkBold}>
+                  REGISTER
+                </Text>
+              </Text>
+            </Pressable>
             <View style={styles.infoCard}>
               <View style={styles.infoIconContainer}>
                 <Image

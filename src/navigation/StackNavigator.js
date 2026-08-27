@@ -9,6 +9,7 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import Splash from '../screens/Splash';
 import Login from '../screens/Login';
+import Register from '../screens/Register/Register';
 import MainTabs from './MainTabs';
 import Menu from '../screens/Menu';
 import FoodDetails from '../screens/FoodDetails';
@@ -39,6 +40,10 @@ export default function StackNavigator() {
         }}>
         <Stack.Screen name={Routes.SPLASH} component={Splash} />
         <Stack.Screen name={Routes.LOGIN} component={Login} />
+        <Stack.Screen
+          name={Routes.REGISTER}
+          component={Register}
+        />
         <Stack.Screen
           name={Routes.HOME}
           component={MainTabs}

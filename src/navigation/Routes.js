@@ -26,6 +26,7 @@ const Routes = {
   // Navigation route name for the Login screen.
   LOGIN: "Login",
   // Navigation route name for the Home screen.
+  REGISTER:"Register",
   HOME: "Home",
   // Navigation route name for the Menu screen.
   MENU: "Menu",

@@ -186,6 +186,21 @@ const styles = StyleSheet.create({
     marginTop: 16,
     letterSpacing: 0,
   },
+  registerLink: {
+  alignItems: 'center',
+  marginTop: 18,
+  marginBottom: 8,
+},
+
+registerLinkText: {
+  color: '#6E7F91',
+  fontSize: 13,
+},
+
+registerLinkBold: {
+  color: '#1565C0',
+  fontWeight: '700',
+},
 });
 
 export default styles;

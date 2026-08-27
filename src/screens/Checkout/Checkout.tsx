@@ -1,7 +1,10 @@
 import React from 'react';
 import {
+  Image,
+  Platform,
   Pressable,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -10,12 +13,17 @@ import {useSelector} from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Routes from '../../navigation/Routes';
 
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets,} from 'react-native-safe-area-context';
 export default function Checkout({navigation}: any) {
   const {cartItems, totalAmount} = useSelector(
     (state: any) => state.cart,
   );
+  const insets = useSafeAreaInsets();
 
+  const topPadding =
+    (Platform.OS === 'android'
+      ? StatusBar.currentHeight || insets.top
+      : insets.top) + 12;
   const addressesByUser = useSelector(
     (state: any) => state.addresses.addressesByUser,
   );
@@ -87,24 +95,45 @@ export default function Checkout({navigation}: any) {
   return (
     <SafeAreaView
       style={styles.safeArea}
-      edges={['bottom']}>
+      edges={[]}>
 
       {/* HEADER */}
+    <StatusBar
+      barStyle="light-content"
+      backgroundColor="#1565C0"
+    />
 
-      <View style={styles.header}>
-        <Pressable
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backText}>‹</Text>
-        </Pressable>
+    <View
+      style={[
+        styles.header,
+        {
+          height: Math.max(92, topPadding + 56),
+          paddingTop: topPadding,
+        },
+      ]}>
 
-        <Text style={styles.headerTitle}>
-          Checkout
-        </Text>
+      <Pressable
+        onPress={() => navigation.goBack()}
+        style={styles.backButton}
+        accessibilityRole="button"
+        accessibilityLabel="Go back">
 
-        <View style={styles.headerSpacer} />
-      </View>
+        <Image
+          source={require('../../assets/icons/back arrow.png')}
+          style={styles.backIcon}
+          resizeMode="contain"
+        />
 
+      </Pressable>
+
+      <Text style={styles.headerTitle}>
+        Checkout
+      </Text>
+
+      <View style={styles.headerSpacer} />
+
+    </View>
+      
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>
@@ -274,36 +303,35 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 64,
-    backgroundColor: '#005BAC',
+    backgroundColor: '#1565C0',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
   },
 
   backButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
-  backText: {
-    color: '#FFFFFF',
-    fontSize: 36,
-    lineHeight: 38,
+  backIcon: {
+    width: 28,
+    height: 28,
+    tintColor: '#FFFFFF',
   },
 
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     color: '#FFFFFF',
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '800',
   },
 
   headerSpacer: {
-    width: 42,
+    width: 44,
   },
 
   content: {

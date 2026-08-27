@@ -3,6 +3,8 @@ import employeeProfile from '../../data/employeeProfile';
 
 const initialState = {
   name: employeeProfile.name,
+  firstName: '',
+  lastName: '',
   email: employeeProfile.email,
   gender: '',
   age: '',
@@ -12,7 +14,9 @@ const initialState = {
 
 const profileSlice = createSlice({
   name: 'profile',
+
   initialState,
+
   reducers: {
     updateProfile: (state, action) => {
       Object.assign(state, action.payload);
@@ -20,5 +24,7 @@ const profileSlice = createSlice({
   },
 });
 
-export const {updateProfile} = profileSlice.actions;
+export const {updateProfile} =
+  profileSlice.actions;
+
 export default profileSlice.reducer;
